@@ -3,6 +3,7 @@ import 'package:campus_connect/screens/delete_account.dart';
 import 'package:campus_connect/screens/edit_profile.dart';
 import 'package:campus_connect/screens/help_support.dart';
 import 'package:campus_connect/screens/home_page.dart';
+import 'package:campus_connect/screens/my_trips.dart';
 import 'package:campus_connect/screens/notifications.dart';
 import 'package:campus_connect/screens/privacy_policy.dart';
 import 'package:campus_connect/screens/view_profile.dart';
@@ -47,6 +48,7 @@ class MyApp extends StatelessWidget {
         '/help_support': (context) => HelpAndSupportScreen(),
         '/about': (context) => AboutScreen(),
         '/notifications': (context) => NotificationsScreen(),
+        '/my_trips': (context) => MyTripsScreen(),
       },
     );
   }

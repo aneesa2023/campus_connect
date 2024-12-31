@@ -32,7 +32,9 @@ class CustomDrawer extends StatelessWidget {
                 _buildDrawerItem(Icons.person, 'Profile', () {
                   Navigator.pushNamed(context, '/view_profile');
                 }),
-                _buildDrawerItem(Icons.directions_car, 'My Trips', () {}),
+                _buildDrawerItem(Icons.directions_car, 'My Trips', () {
+                  Navigator.pushNamed(context, '/my_trips');
+                }),
                 _buildDrawerItem(Icons.info, 'About', () {
                   Navigator.pushNamed(context, '/about');
                 }),
