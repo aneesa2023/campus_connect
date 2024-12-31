@@ -26,15 +26,28 @@ class CustomDrawer extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: ListView(padding: EdgeInsets.zero,
+            child: ListView(
+              padding: EdgeInsets.zero,
               children: [
-                _buildDrawerItem(Icons.person, 'Profile', () {}),
+                _buildDrawerItem(Icons.person, 'Profile', () {
+                  Navigator.pushNamed(context, '/view_profile');
+                }),
                 _buildDrawerItem(Icons.directions_car, 'My Trips', () {}),
-                _buildDrawerItem(Icons.info, 'About', () {}),
-                _buildDrawerItem(Icons.notifications, 'Notifications', () {}),
-                _buildDrawerItem(Icons.settings, 'Settings', () {}),
-                _buildDrawerItem(Icons.help, 'Help and Support', () {}),
-                _buildDrawerItem(Icons.logout, 'Logout', () {}),
+                _buildDrawerItem(Icons.info, 'About', () {
+                  Navigator.pushNamed(context, '/about');
+                }),
+                _buildDrawerItem(Icons.notifications, 'Notifications', () {
+                  Navigator.pushNamed(context, '/notifications');
+                }),
+                _buildDrawerItem(Icons.settings, 'Settings', () {
+                  Navigator.pushNamed(context, '/settings');
+                }),
+                _buildDrawerItem(Icons.help, 'Help and Support', () {
+                  Navigator.pushNamed(context, '/help_support');
+                }),
+                _buildDrawerItem(Icons.logout, 'Logout', () {
+                  Navigator.pushNamed(context, '/');
+                }),
               ],
             ),
           ),
@@ -45,7 +58,7 @@ class CustomDrawer extends StatelessWidget {
 
   Widget _buildDrawerItem(IconData icon, String title, VoidCallback onTap) {
     return ListTile(
-      leading: Icon(icon, color: Colors.blue),
+      leading: Icon(icon, color: Colors.brown),
       title: Text(title, style: TextStyle(fontSize: 16)),
       onTap: onTap,
     );
