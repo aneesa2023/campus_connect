@@ -106,7 +106,8 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
     } else {
       debugPrint("Place Details API Failed: ${response.body}");
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to connect to Place Details API.")),
+        const SnackBar(
+            content: Text("Failed to connect to Place Details API.")),
       );
     }
   }
@@ -161,13 +162,15 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                          content: Text("Please enter a valid address.")),
+                        content: Text("Please enter a valid address."),
+                      ),
                     );
                   }
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                        content: Text("Please enter or select a location.")),
+                      content: Text("Please enter or select a location."),
+                    ),
                   );
                 }
               },

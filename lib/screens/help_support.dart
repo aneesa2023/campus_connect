@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class HelpAndSupportScreen extends StatefulWidget {
+  const HelpAndSupportScreen({super.key});
+
   @override
   _HelpAndSupportScreenState createState() => _HelpAndSupportScreenState();
 }
@@ -108,7 +110,10 @@ class _HelpAndSupportScreenState extends State<HelpAndSupportScreen> {
             // Contact Support Section
             Text(
               'Contact Support',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             SizedBox(height: 10),
             Text(
@@ -138,13 +143,20 @@ class _HelpAndSupportScreenState extends State<HelpAndSupportScreen> {
                 // Handle contact support submission
                 if (_contactSupportController.text.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Please enter your query!')),
+                    SnackBar(
+                      content: Text(
+                        'Please enter your query!',
+                      ),
+                    ),
                   );
                   return;
                 }
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                      content: Text('Support query submitted successfully!')),
+                    content: Text(
+                      'Support query submitted successfully!',
+                    ),
+                  ),
                 );
                 _contactSupportController.clear();
               },
@@ -152,7 +164,9 @@ class _HelpAndSupportScreenState extends State<HelpAndSupportScreen> {
                 backgroundColor: Colors.brown,
                 minimumSize: Size(double.infinity, 50),
               ),
-              child: Text('Submit Query'),
+              child: Text(
+                'Submit Query',
+              ),
             ),
           ],
         ),

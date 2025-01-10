@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 import 'location_search_screen.dart';
 
 class PostRideLocationScreen extends StatefulWidget {
-  const PostRideLocationScreen({Key? key}) : super(key: key);
+  const PostRideLocationScreen({super.key});
 
   @override
   _PostRideLocationScreenState createState() => _PostRideLocationScreenState();
@@ -213,7 +213,9 @@ class _PostRideLocationScreenState extends State<PostRideLocationScreen> {
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      suffixIcon: const Icon(Icons.calendar_today),
+                      suffixIcon: const Icon(
+                        Icons.calendar_today,
+                      ),
                     ),
                   ),
                 ),
@@ -226,7 +228,9 @@ class _PostRideLocationScreenState extends State<PostRideLocationScreen> {
                   ),
                   child: const Text(
                     "Post Ride",
-                    style: TextStyle(color: Colors.white),
+                    style: TextStyle(
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ],

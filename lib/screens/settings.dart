@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class Settings extends StatefulWidget {
+  const Settings({super.key});
+
   @override
   _SettingsState createState() => _SettingsState();
 }
@@ -46,7 +48,10 @@ class _SettingsState extends State<Settings> {
   Widget _buildSettingOption(String title, VoidCallback onTap) {
     return ListTile(
       title: Text(title),
-      trailing: Icon(Icons.arrow_forward_ios, size: 16),
+      trailing: Icon(
+        Icons.arrow_forward_ios,
+        size: 16,
+      ),
       onTap: onTap,
     );
   }

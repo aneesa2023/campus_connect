@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 import 'location_search_screen.dart';
 
 class RideSearchScreen extends StatefulWidget {
-  const RideSearchScreen({Key? key}) : super(key: key);
+  const RideSearchScreen({super.key});
 
   @override
   _RideSearchScreenState createState() => _RideSearchScreenState();

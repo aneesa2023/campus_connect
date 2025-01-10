@@ -119,9 +119,12 @@ class _MyTripsScreenState extends State<MyTripsScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     CircleAvatar(
-                      child: const Icon(Icons.person, color: Colors.white),
                       backgroundColor: Colors.grey,
                       radius: 25,
+                      child: const Icon(
+                        Icons.person,
+                        color: Colors.white,
+                      ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -131,15 +134,19 @@ class _MyTripsScreenState extends State<MyTripsScreen>
                           Text(
                             trip['name']!,
                             style: const TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 16),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
                           ),
                           Row(
                             children: [
                               const Icon(Icons.star,
                                   color: Colors.amber, size: 16),
                               const SizedBox(width: 2),
-                              Text(trip['rating']!,
-                                  style: const TextStyle(fontSize: 14)),
+                              Text(
+                                trip['rating']!,
+                                style: const TextStyle(fontSize: 14),
+                              ),
                             ],
                           ),
                         ],

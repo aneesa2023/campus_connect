@@ -2,6 +2,8 @@ import 'package:campus_connect/screens/edit_profile.dart';
 import 'package:flutter/material.dart';
 
 class ViewProfileScreen extends StatelessWidget {
+  const ViewProfileScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -22,7 +24,9 @@ class ViewProfileScreen extends StatelessWidget {
               // Navigate to Edit Profile Screen
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => EditProfileScreen()),
+                MaterialPageRoute(
+                  builder: (context) => EditProfileScreen(),
+                ),
               );
             },
           ),
@@ -48,12 +52,17 @@ class ViewProfileScreen extends StatelessWidget {
                   SizedBox(height: 10),
                   Text(
                     'User Name',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   SizedBox(height: 5),
                   Text(
                     'username@gmail.com',
-                    style: TextStyle(color: Colors.grey),
+                    style: TextStyle(
+                      color: Colors.grey,
+                    ),
                   ),
                 ],
               ),
@@ -62,8 +71,13 @@ class ViewProfileScreen extends StatelessWidget {
             Divider(),
             SizedBox(height: 10),
             // Personal Details
-            Text('Personal Details',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(
+              'Personal Details',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             SizedBox(height: 10),
             _buildReadOnlyField('Full Name', 'John Doe'),
             SizedBox(height: 10),
@@ -74,8 +88,13 @@ class ViewProfileScreen extends StatelessWidget {
             Divider(),
             SizedBox(height: 10),
             // College Details
-            Text('College Details',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(
+              'College Details',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             SizedBox(height: 10),
             _buildReadOnlyField('College Name', 'Rutgers University'),
             SizedBox(height: 10),
@@ -86,8 +105,13 @@ class ViewProfileScreen extends StatelessWidget {
             Divider(),
             SizedBox(height: 10),
             // Vehicle Details
-            Text('Vehicle Details',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(
+              'Vehicle Details',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             SizedBox(height: 10),
             _buildReadOnlyField('Vehicle Name/Model', 'Toyota Corolla'),
             SizedBox(height: 10),
@@ -104,9 +128,17 @@ class ViewProfileScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontWeight: FontWeight.bold)),
+        Text(
+          label,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         SizedBox(height: 5),
-        Text(value, style: TextStyle(fontSize: 16)),
+        Text(
+          value,
+          style: TextStyle(fontSize: 16),
+        ),
         SizedBox(height: 10),
       ],
     );
