@@ -1,39 +1,64 @@
 import 'package:campus_connect/screens/custom_drawer.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
+
+  Future<bool> _isUserRegistered() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('isDriverRegistered') ?? false;
+  }
+
+  Future<void> _setUserRegistered() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isDriverRegistered', true);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Campus Connect'),
+        title: const Text('Campus Connect'),
         centerTitle: true,
         backgroundColor: Colors.brown,
       ),
-      drawer: CustomDrawer(), // Include the custom drawer here
+      drawer: const CustomDrawer(),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // Post a Ride Button
             ElevatedButton(
-              onPressed: () {
-                // Navigate to the Post a Ride page
-                Navigator.pushNamed(context, '/postRide');
+              onPressed: () async {
+                bool isRegistered = await _isUserRegistered();
+
+                if (isRegistered) {
+                  // Navigate directly to Post a Ride page
+                  Navigator.pushNamed(context, '/postRide');
+                } else {
+                  // Navigate to Register Driver page
+                  final result =
+                      await Navigator.pushNamed(context, '/registerDriver');
+                  if (result != null) {
+                    print(result); // Example: {'licenseNumber': '1234', ...}
+                    await _setUserRegistered();
+                    Navigator.pushNamed(context, '/postRide');
+                  }
+                }
               },
               style: ElevatedButton.styleFrom(
                 foregroundColor: Colors.white,
-                backgroundColor: Colors.brown, // White text
-                minimumSize: Size(200, 50), // Button size
+                backgroundColor: Colors.brown,
+                minimumSize: const Size(200, 50),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              child: Text('Post a Ride'),
+              child: const Text('Post a Ride'),
             ),
-            SizedBox(height: 20), // Spacing between the buttons
+
+            const SizedBox(height: 20),
             // Search for a Ride Button
             OutlinedButton(
               onPressed: () {
@@ -42,13 +67,13 @@ class HomePage extends StatelessWidget {
               },
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.black,
-                minimumSize: Size(200, 50), // Button size
-                side: BorderSide(color: Colors.black), // Black border
+                minimumSize: const Size(200, 50),
+                side: const BorderSide(color: Colors.black),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              child: Text('Search for a Ride'),
+              child: const Text('Search for a Ride'),
             ),
           ],
         ),

@@ -6,14 +6,14 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'location_search_screen.dart';
 
-class RideSearchScreen extends StatefulWidget {
-  const RideSearchScreen({Key? key}) : super(key: key);
+class PostRideLocationScreen extends StatefulWidget {
+  const PostRideLocationScreen({Key? key}) : super(key: key);
 
   @override
-  _RideSearchScreenState createState() => _RideSearchScreenState();
+  _PostRideLocationScreenState createState() => _PostRideLocationScreenState();
 }
 
-class _RideSearchScreenState extends State<RideSearchScreen> {
+class _PostRideLocationScreenState extends State<PostRideLocationScreen> {
   final TextEditingController _fromController = TextEditingController();
   final TextEditingController _toController = TextEditingController();
   String? _selectedDateTime;
@@ -25,7 +25,7 @@ class _RideSearchScreenState extends State<RideSearchScreen> {
   Set<Marker> _markers = {};
   Polyline? _routePolyline;
 
-  late String googleApiKey = Constants.googleApiKey;
+  final String googleApiKey = Constants.googleApiKey;
 
   @override
   void dispose() {
@@ -34,16 +34,8 @@ class _RideSearchScreenState extends State<RideSearchScreen> {
     super.dispose();
   }
 
-  @override
-  void initState() {
-    super.initState();
-    googleApiKey = 'AIzaSyDYcWPWWFCBxoe29GllyuPGwV3IXN0F750';
-    debugPrint("Google API Key Initialized: $googleApiKey");
-  }
-
   Future<void> _navigateToSearch(
       String title, TextEditingController controller, bool isFrom) async {
-    debugPrint("Navigating to search with API Key: $googleApiKey");
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -55,7 +47,6 @@ class _RideSearchScreenState extends State<RideSearchScreen> {
     );
 
     if (result != null) {
-      debugPrint("Search Result: $result");
       controller.text = result['description'] ?? "Unknown Location";
 
       final lat = result['lat'];
@@ -67,23 +58,13 @@ class _RideSearchScreenState extends State<RideSearchScreen> {
         } else {
           _toLocation = LatLng(lat, lng);
         }
-      } else {
-        debugPrint("Lat/Lng are null in result.");
       }
-
       setState(() {});
-    } else {
-      debugPrint("Search Result is null.");
     }
   }
 
   Future<void> _fetchRoute() async {
-    if (_fromLocation == null || _toLocation == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select both locations.")),
-      );
-      return;
-    }
+    if (_fromLocation == null || _toLocation == null) return;
 
     final response = await http.get(
       Uri.parse(
@@ -105,24 +86,13 @@ class _RideSearchScreenState extends State<RideSearchScreen> {
             width: 4,
           );
 
-          // Update camera to fit the route
           LatLngBounds bounds = _getBoundsForPolyline(decodedPoints);
           _mapController
               .animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
         });
-
-        debugPrint("Route Polyline Set: $decodedPoints");
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("No route found between locations.")),
-        );
       }
-    } else {
-      debugPrint("Failed API Response: ${response.body}");
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to fetch route from API.")),
-      );
     }
+    Navigator.pushNamed(context, '/postRideDetails');
   }
 
   LatLngBounds _getBoundsForPolyline(List<LatLng> polylinePoints) {
@@ -142,37 +112,6 @@ class _RideSearchScreenState extends State<RideSearchScreen> {
       southwest: LatLng(minLat, minLng),
       northeast: LatLng(maxLat, maxLng),
     );
-  }
-
-  void _onSearchRoute() {
-    if (_fromLocation == null || _toLocation == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select both locations.")),
-      );
-      return;
-    }
-
-    debugPrint("From Location: ${_fromController.text}");
-    debugPrint(
-        "From LatLng: ${_fromLocation?.latitude}, ${_fromLocation?.longitude}");
-
-    debugPrint("To Location: ${_toController.text}");
-    debugPrint(
-        "To LatLng: ${_toLocation?.latitude}, ${_toLocation?.longitude}");
-
-    _markers.clear();
-    _markers.add(Marker(
-      markerId: const MarkerId("from"),
-      position: _fromLocation!,
-      infoWindow: const InfoWindow(title: "From"),
-    ));
-    _markers.add(Marker(
-      markerId: const MarkerId("to"),
-      position: _toLocation!,
-      infoWindow: const InfoWindow(title: "To"),
-    ));
-
-    _fetchRoute();
   }
 
   List<LatLng> _decodePolyline(String encoded) {
@@ -205,36 +144,11 @@ class _RideSearchScreenState extends State<RideSearchScreen> {
     return points;
   }
 
-  void _updateCameraBounds() {
-    if (_fromLocation != null && _toLocation != null) {
-      LatLngBounds bounds = LatLngBounds(
-        southwest: LatLng(
-          _fromLocation!.latitude < _toLocation!.latitude
-              ? _fromLocation!.latitude
-              : _toLocation!.latitude,
-          _fromLocation!.longitude < _toLocation!.longitude
-              ? _fromLocation!.longitude
-              : _toLocation!.longitude,
-        ),
-        northeast: LatLng(
-          _fromLocation!.latitude > _toLocation!.latitude
-              ? _fromLocation!.latitude
-              : _toLocation!.latitude,
-          _fromLocation!.longitude > _toLocation!.longitude
-              ? _fromLocation!.longitude
-              : _toLocation!.longitude,
-        ),
-      );
-      debugPrint("Updating camera bounds: $bounds");
-      _mapController.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Search for a Ride'),
+        title: const Text('Post a Ride'),
         backgroundColor: Colors.brown,
         centerTitle: true,
       ),
@@ -276,14 +190,42 @@ class _RideSearchScreenState extends State<RideSearchScreen> {
                   ),
                 ),
                 const SizedBox(height: 10),
+                GestureDetector(
+                  onTap: () {
+                    DatePicker.showDateTimePicker(
+                      context,
+                      showTitleActions: true,
+                      minTime: DateTime.now(),
+                      maxTime: DateTime(2025, 12, 31),
+                      onConfirm: (date) {
+                        setState(() {
+                          _selectedDateTime =
+                              "${date.month}-${date.day}-${date.year} ${date.hour}:${date.minute}";
+                        });
+                      },
+                      currentTime: DateTime.now(),
+                    );
+                  },
+                  child: TextField(
+                    enabled: false,
+                    decoration: InputDecoration(
+                      labelText: _selectedDateTime ?? "Select Date & Time",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      suffixIcon: const Icon(Icons.calendar_today),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: _onSearchRoute,
+                  onPressed: _fetchRoute,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.brown,
                     minimumSize: const Size(double.infinity, 50),
                   ),
                   child: const Text(
-                    "Search Route",
+                    "Post Ride",
                     style: TextStyle(color: Colors.white),
                   ),
                 ),
@@ -298,7 +240,6 @@ class _RideSearchScreenState extends State<RideSearchScreen> {
               ),
               onMapCreated: (controller) {
                 _mapController = controller;
-                _updateCameraBounds();
               },
               markers: _markers,
               polylines: _routePolyline != null ? {_routePolyline!} : {},
