@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 class NotificationsScreen extends StatelessWidget {
+  NotificationsScreen({super.key});
   final List<Map<String, String>> notifications = [
     {
       'title': 'Ride Confirmed',

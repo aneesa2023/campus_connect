@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class DeleteAccountScreen extends StatelessWidget {
+  const DeleteAccountScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,14 +30,18 @@ class DeleteAccountScreen extends StatelessWidget {
               onPressed: () {
                 // Handle account deletion logic
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Account Deleted')),
+                  SnackBar(
+                    content: Text('Account Deleted'),
+                  ),
                 );
                 Navigator.pop(context);
               },
-              child: Text('Delete Account'),
               style: ElevatedButton.styleFrom(
                 foregroundColor: Colors.white,
                 backgroundColor: Colors.red,
+              ),
+              child: Text(
+                'Delete Account',
               ),
             ),
             SizedBox(height: 10),
@@ -43,7 +49,11 @@ class DeleteAccountScreen extends StatelessWidget {
               onPressed: () {
                 // Handle account deactivation logic
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Account Deactivated')),
+                  SnackBar(
+                    content: Text(
+                      'Account Deactivated',
+                    ),
+                  ),
                 );
                 Navigator.pop(context);
               },

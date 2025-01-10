@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class OnboardingScreen extends StatefulWidget {
+  const OnboardingScreen({super.key});
+
   @override
   _OnboardingScreenState createState() => _OnboardingScreenState();
 }
@@ -95,19 +97,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               children: [
                 ElevatedButton(
                   onPressed: () => Navigator.pushNamed(context, '/login'),
-                  child: Text('Login'),
                   style: ElevatedButton.styleFrom(
                     minimumSize: Size(double.infinity, 50),
                   ),
+                  child: Text('Login'),
                 ),
                 SizedBox(height: 10),
                 OutlinedButton(
                   onPressed: () => Navigator.pushNamed(context, '/signup'),
-                  child: Text('Sign up'),
                   style: OutlinedButton.styleFrom(
                     minimumSize: Size(double.infinity, 50),
                     side: BorderSide(color: Colors.black),
                   ),
+                  child: Text('Sign up'),
                 ),
               ],
             ),
