@@ -33,11 +33,15 @@ class _MyTripsScreenState extends State<MyTripsScreen>
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: Colors.brown.shade900,
-          labelColor: Colors.brown.shade900,
-          unselectedLabelColor: Colors.grey,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
           tabs: const [
-            Tab(text: 'Upcoming'),
-            Tab(text: 'Past trips'),
+            Tab(
+              text: 'Upcoming',
+            ),
+            Tab(
+              text: 'Past trips',
+            ),
           ],
         ),
       ),

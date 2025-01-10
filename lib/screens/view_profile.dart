@@ -60,7 +60,7 @@ class ViewProfileScreen extends StatelessWidget {
             ),
             SizedBox(height: 20),
             Divider(),
-
+            SizedBox(height: 10),
             // Personal Details
             Text('Personal Details',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -70,9 +70,21 @@ class ViewProfileScreen extends StatelessWidget {
             _buildReadOnlyField('Email Address', 'johndoe@example.com'),
             SizedBox(height: 10),
             _buildReadOnlyField('Phone Number', '123-456-7890'),
-            SizedBox(height: 20),
+            SizedBox(height: 10),
             Divider(),
-
+            SizedBox(height: 10),
+            // College Details
+            Text('College Details',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            SizedBox(height: 10),
+            _buildReadOnlyField('College Name', 'Rutgers University'),
+            SizedBox(height: 10),
+            _buildReadOnlyField('College Mail Id', 'name@college.edu'),
+            SizedBox(height: 10),
+            _buildReadOnlyField('College Id', 'RU01234'),
+            SizedBox(height: 10),
+            Divider(),
+            SizedBox(height: 10),
             // Vehicle Details
             Text('Vehicle Details',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -80,7 +92,7 @@ class ViewProfileScreen extends StatelessWidget {
             _buildReadOnlyField('Vehicle Name/Model', 'Toyota Corolla'),
             SizedBox(height: 10),
             _buildReadOnlyField('Driving License Number', 'DL12345678'),
-            SizedBox(height: 20),
+            SizedBox(height: 10),
             Divider(),
           ],
         ),

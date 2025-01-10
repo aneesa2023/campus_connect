@@ -1,11 +1,15 @@
 import 'package:campus_connect/screens/about.dart';
 import 'package:campus_connect/screens/delete_account.dart';
+import 'package:campus_connect/screens/driver_registration.dart';
 import 'package:campus_connect/screens/edit_profile.dart';
 import 'package:campus_connect/screens/help_support.dart';
 import 'package:campus_connect/screens/home_page.dart';
 import 'package:campus_connect/screens/my_trips.dart';
 import 'package:campus_connect/screens/notifications.dart';
+import 'package:campus_connect/screens/post_ride_details.dart';
+import 'package:campus_connect/screens/post_ride_search.dart';
 import 'package:campus_connect/screens/privacy_policy.dart';
+import 'package:campus_connect/screens/ride_search.dart';
 import 'package:campus_connect/screens/view_profile.dart';
 import 'package:campus_connect/screens/settings.dart';
 import 'package:flutter/material.dart';
@@ -49,6 +53,10 @@ class MyApp extends StatelessWidget {
         '/about': (context) => AboutScreen(),
         '/notifications': (context) => NotificationsScreen(),
         '/my_trips': (context) => MyTripsScreen(),
+        '/searchRide': (context) => RideSearchScreen(),
+        '/postRide': (context) => PostRideLocationScreen(),
+        '/postRideDetails': (context) => PostRideDetails(),
+        '/registerDriver': (context) => RegisterDriverScreen(),
       },
     );
   }

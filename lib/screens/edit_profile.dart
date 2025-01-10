@@ -11,10 +11,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _collegeNameController = TextEditingController();
+  final TextEditingController _collegeEmailIdController =
+      TextEditingController();
+  final TextEditingController _collegeIdController = TextEditingController();
   final TextEditingController _vehicleController = TextEditingController();
   final TextEditingController _licenseController = TextEditingController();
 
-  File? _profileImage; // To store the selected image
+  File? _profileImage;
 
   @override
   void initState() {
@@ -23,6 +27,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _nameController.text = 'John Doe';
     _emailController.text = 'johndoe@example.com';
     _phoneController.text = '123-456-7890';
+    _collegeNameController.text = 'Rutgers University';
+    _collegeEmailIdController.text = 'netid@rutgers.edu';
+    _collegeIdController.text = 'netid123';
     _vehicleController.text = 'Toyota Corolla';
     _licenseController.text = 'DL12345678';
   }
@@ -102,8 +109,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
             ),
             SizedBox(height: 20),
-            Divider(),
-
             // Personal Details
             Text('Personal Details',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -114,7 +119,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             SizedBox(height: 10),
             _buildEditableField('Phone Number', _phoneController),
             SizedBox(height: 20),
-            Divider(),
+
+            // College Details
+            Text('College Details',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            SizedBox(height: 10),
+            _buildEditableField('College Name', _collegeNameController),
+            SizedBox(height: 10),
+            _buildEditableField('College Email Id', _collegeEmailIdController),
+            SizedBox(height: 10),
+            _buildEditableField('College Id', _collegeIdController),
+            SizedBox(height: 20),
 
             // Vehicle Details
             Text('Vehicle Details',
@@ -130,12 +145,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Widget _buildEditableField(String label, TextEditingController controller) {
-    return TextField(
-      controller: controller,
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8.0),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10.0),
+      child: TextField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8.0),
+          ),
         ),
       ),
     );
