@@ -28,7 +28,7 @@ class _PostRideDetailsState extends State<PostRideDetails> {
   ];
   final List<String> _selectedOptions = [];
 
-  void _addCar() {
+  void _addVehicle() {
     if (_vehicleTypeController.text.isNotEmpty &&
         _vehicleModelController.text.isNotEmpty &&
         _vehicleLicenseController.text.isNotEmpty) {
@@ -41,7 +41,7 @@ class _PostRideDetailsState extends State<PostRideDetails> {
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all car details')),
+        const SnackBar(content: Text('Please fill all Vehicle details')),
       );
     }
   }
@@ -103,10 +103,10 @@ class _PostRideDetailsState extends State<PostRideDetails> {
                           "Select Saved Vehicle",
                         ),
                         isExpanded: true,
-                        items: _savedVehicles.map((car) {
+                        items: _savedVehicles.map((vehicle) {
                           return DropdownMenuItem(
-                            value: car,
-                            child: Text(car),
+                            value: vehicle,
+                            child: Text(vehicle),
                           );
                         }).toList(),
                         onChanged: (value) {
@@ -140,7 +140,7 @@ class _PostRideDetailsState extends State<PostRideDetails> {
                     TextField(
                       controller: _vehicleTypeController,
                       decoration: const InputDecoration(
-                        labelText: "Car Type",
+                        labelText: "Vehicle Type",
                         border: OutlineInputBorder(),
                       ),
                     ),
@@ -148,7 +148,7 @@ class _PostRideDetailsState extends State<PostRideDetails> {
                     TextField(
                       controller: _vehicleModelController,
                       decoration: const InputDecoration(
-                        labelText: "Car Model",
+                        labelText: "Vehicle Model",
                         border: OutlineInputBorder(),
                       ),
                     ),
@@ -156,7 +156,7 @@ class _PostRideDetailsState extends State<PostRideDetails> {
                     TextField(
                       controller: _vehicleLicenseController,
                       decoration: const InputDecoration(
-                        labelText: "Car License No",
+                        labelText: "Vehicle License Number",
                         border: OutlineInputBorder(),
                       ),
                     ),
@@ -164,7 +164,7 @@ class _PostRideDetailsState extends State<PostRideDetails> {
                     Align(
                       alignment: Alignment.centerRight,
                       child: ElevatedButton.icon(
-                        onPressed: _addCar,
+                        onPressed: _addVehicle,
                         icon: const Icon(
                           Icons.add,
                           color: Colors.white,

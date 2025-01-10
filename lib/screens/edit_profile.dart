@@ -17,10 +17,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final TextEditingController _collegeEmailIdController =
       TextEditingController();
   final TextEditingController _collegeIdController = TextEditingController();
-  final TextEditingController _vehicleController = TextEditingController();
-  final TextEditingController _licenseController = TextEditingController();
+
+  final TextEditingController _vehicleModelController = TextEditingController();
+  final TextEditingController _licensePlateController = TextEditingController();
 
   File? _profileImage;
+  List<Map<String, String>> _vehicles = [];
+  int? _editingIndex;
 
   @override
   void initState() {
@@ -32,8 +35,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _collegeNameController.text = 'Rutgers University';
     _collegeEmailIdController.text = 'netid@rutgers.edu';
     _collegeIdController.text = 'netid123';
-    _vehicleController.text = 'Toyota Corolla';
-    _licenseController.text = 'DL12345678';
+
+    // Sample vehicle list
+    _vehicles = [
+      {'model': 'Toyota Corolla', 'license': 'XYZ123'},
+      {'model': 'Honda Accord', 'license': 'ABC456'},
+    ];
   }
 
   // Method to pick an image
@@ -49,14 +56,54 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
+  void _addOrEditVehicle() {
+    if (_vehicleModelController.text.isNotEmpty &&
+        _licensePlateController.text.isNotEmpty) {
+      setState(() {
+        if (_editingIndex != null) {
+          // Update an existing vehicle
+          _vehicles[_editingIndex!] = {
+            'model': _vehicleModelController.text,
+            'license': _licensePlateController.text,
+          };
+        } else {
+          // Add a new vehicle
+          _vehicles.add({
+            'model': _vehicleModelController.text,
+            'license': _licensePlateController.text,
+          });
+        }
+
+        _vehicleModelController.clear();
+        _licensePlateController.clear();
+        _editingIndex = null;
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill in both fields')),
+      );
+    }
+  }
+
+  void _editVehicle(int index) {
+    setState(() {
+      _vehicleModelController.text = _vehicles[index]['model']!;
+      _licensePlateController.text = _vehicles[index]['license']!;
+      _editingIndex = index;
+    });
+  }
+
+  void _deleteVehicle(int index) {
+    setState(() {
+      _vehicles.removeAt(index);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Edit Profile',
-          style: TextStyle(color: Colors.white),
-        ),
+        title: const Text('Edit Profile'),
         backgroundColor: Colors.brown,
         centerTitle: true,
         actions: [
@@ -64,16 +111,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             onPressed: () {
               // Save profile changes
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Profile Updated')),
+                const SnackBar(content: Text('Profile Updated')),
               );
               Navigator.pop(context);
             },
-            child: Text('Save', style: TextStyle(color: Colors.white)),
+            child: const Text('Save', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -99,7 +146,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     right: 0,
                     child: InkWell(
                       onTap: _pickImage,
-                      child: CircleAvatar(
+                      child: const CircleAvatar(
                         backgroundColor: Colors.brown,
                         radius: 18,
                         child: Icon(Icons.camera_alt,
@@ -110,36 +157,86 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ],
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             // Personal Details
-            Text('Personal Details',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            SizedBox(height: 10),
-            _buildEditableField('Full Name', _nameController),
-            SizedBox(height: 10),
-            _buildEditableField('Email Address', _emailController),
-            SizedBox(height: 10),
-            _buildEditableField('Phone Number', _phoneController),
-            SizedBox(height: 20),
+            _buildSectionCard(
+              title: 'Personal Details',
+              children: [
+                _buildEditableField('Full Name', _nameController),
+                _buildEditableField('Email Address', _emailController),
+                _buildEditableField('Phone Number', _phoneController),
+              ],
+            ),
 
             // College Details
-            Text('College Details',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            SizedBox(height: 10),
-            _buildEditableField('College Name', _collegeNameController),
-            SizedBox(height: 10),
-            _buildEditableField('College Email Id', _collegeEmailIdController),
-            SizedBox(height: 10),
-            _buildEditableField('College Id', _collegeIdController),
-            SizedBox(height: 20),
+            _buildSectionCard(
+              title: 'College Details',
+              children: [
+                _buildEditableField('College Name', _collegeNameController),
+                _buildEditableField(
+                    'College Email ID', _collegeEmailIdController),
+                _buildEditableField('College ID', _collegeIdController),
+              ],
+            ),
 
             // Vehicle Details
-            Text('Vehicle Details',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            SizedBox(height: 10),
-            _buildEditableField('Vehicle Name/Model', _vehicleController),
-            SizedBox(height: 10),
-            _buildEditableField('Driving License Number', _licenseController),
+            _buildSectionCard(
+              title: 'Vehicle Details',
+              children: [
+                ..._vehicles.asMap().entries.map((entry) {
+                  int index = entry.key;
+                  Map<String, String> vehicle = entry.value;
+                  return ListTile(
+                    title: Text(vehicle['model']!),
+                    subtitle: Text('License Plate: ${vehicle['license']}'),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit, color: Colors.brown),
+                          onPressed: () => _editVehicle(index),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () => _deleteVehicle(index),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                const Divider(),
+                TextField(
+                  controller: _vehicleModelController,
+                  decoration: const InputDecoration(
+                    labelText: 'Vehicle Model',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _licensePlateController,
+                  decoration: const InputDecoration(
+                    labelText: 'License Plate',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _addOrEditVehicle,
+                    style:
+                        ElevatedButton.styleFrom(backgroundColor: Colors.brown),
+                    child: Text(
+                      _editingIndex != null ? 'Update Vehicle' : 'Add Vehicle',
+                      style: TextStyle(
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -148,13 +245,45 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   Widget _buildEditableField(String label, TextEditingController controller) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10.0),
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: TextField(
         controller: controller,
         decoration: InputDecoration(
           labelText: label,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8.0),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionCard({
+    required String title,
+    required List<Widget> children,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      child: Card(
+        elevation: 3,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const Divider(),
+              ...children,
+            ],
           ),
         ),
       ),

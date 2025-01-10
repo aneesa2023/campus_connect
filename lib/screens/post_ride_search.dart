@@ -27,6 +27,8 @@ class _PostRideLocationScreenState extends State<PostRideLocationScreen> {
 
   final String googleApiKey = Constants.googleApiKey;
 
+  bool _isRouteFetched = false;
+
   @override
   void dispose() {
     _fromController.dispose();
@@ -89,10 +91,11 @@ class _PostRideLocationScreenState extends State<PostRideLocationScreen> {
           LatLngBounds bounds = _getBoundsForPolyline(decodedPoints);
           _mapController
               .animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
+
+          _isRouteFetched = true;
         });
       }
     }
-    Navigator.pushNamed(context, '/postRideDetails');
   }
 
   LatLngBounds _getBoundsForPolyline(List<LatLng> polylinePoints) {
@@ -221,14 +224,18 @@ class _PostRideLocationScreenState extends State<PostRideLocationScreen> {
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: _fetchRoute,
+                  onPressed: _isRouteFetched
+                      ? () {
+                          Navigator.pushNamed(context, '/postRideDetails');
+                        }
+                      : _fetchRoute,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.brown,
                     minimumSize: const Size(double.infinity, 50),
                   ),
-                  child: const Text(
-                    "Post Ride",
-                    style: TextStyle(
+                  child: Text(
+                    _isRouteFetched ? "Post Ride" : "Get Route",
+                    style: const TextStyle(
                       color: Colors.white,
                     ),
                   ),

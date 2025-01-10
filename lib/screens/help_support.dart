@@ -101,7 +101,12 @@ class _HelpAndSupportScreenState extends State<HelpAndSupportScreen> {
                 backgroundColor: Colors.red, // Button color
                 minimumSize: Size(double.infinity, 50),
               ),
-              child: Text('Submit Report'),
+              child: Text(
+                'Submit Report',
+                style: TextStyle(
+                  color: Colors.white,
+                ),
+              ),
             ),
 
             SizedBox(height: 30),
@@ -166,6 +171,9 @@ class _HelpAndSupportScreenState extends State<HelpAndSupportScreen> {
               ),
               child: Text(
                 'Submit Query',
+                style: TextStyle(
+                  color: Colors.white,
+                ),
               ),
             ),
           ],
