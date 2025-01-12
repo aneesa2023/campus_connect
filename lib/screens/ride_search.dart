@@ -15,7 +15,6 @@ class RideSearchScreen extends StatefulWidget {
 class RideSearchScreenState extends State<RideSearchScreen> {
   final TextEditingController _fromController = TextEditingController();
   final TextEditingController _toController = TextEditingController();
-  String? _selectedDateTime;
 
   LatLng? _fromLocation;
   LatLng? _toLocation;
@@ -53,6 +52,8 @@ class RideSearchScreenState extends State<RideSearchScreen> {
       ),
     );
 
+    if (!mounted) return; // Check if widget is still mounted
+
     if (result != null) {
       debugPrint("Search Result: $result");
       controller.text = result['description'] ?? "Unknown Location";
@@ -78,6 +79,7 @@ class RideSearchScreenState extends State<RideSearchScreen> {
 
   Future<void> _fetchRoute() async {
     if (_fromLocation == null || _toLocation == null) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please select both locations.")),
       );
@@ -89,6 +91,8 @@ class RideSearchScreenState extends State<RideSearchScreen> {
         'https://maps.googleapis.com/maps/api/directions/json?origin=${_fromLocation!.latitude},${_fromLocation!.longitude}&destination=${_toLocation!.latitude},${_toLocation!.longitude}&key=$googleApiKey',
       ),
     );
+
+    if (!mounted) return;
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -118,6 +122,7 @@ class RideSearchScreenState extends State<RideSearchScreen> {
       }
     } else {
       debugPrint("Failed API Response: ${response.body}");
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Failed to fetch route from API.")),
       );
@@ -141,37 +146,6 @@ class RideSearchScreenState extends State<RideSearchScreen> {
       southwest: LatLng(minLat, minLng),
       northeast: LatLng(maxLat, maxLng),
     );
-  }
-
-  void _onSearchRoute() {
-    if (_fromLocation == null || _toLocation == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select both locations.")),
-      );
-      return;
-    }
-
-    debugPrint("From Location: ${_fromController.text}");
-    debugPrint(
-        "From LatLng: ${_fromLocation?.latitude}, ${_fromLocation?.longitude}");
-
-    debugPrint("To Location: ${_toController.text}");
-    debugPrint(
-        "To LatLng: ${_toLocation?.latitude}, ${_toLocation?.longitude}");
-
-    _markers.clear();
-    _markers.add(Marker(
-      markerId: const MarkerId("from"),
-      position: _fromLocation!,
-      infoWindow: const InfoWindow(title: "From"),
-    ));
-    _markers.add(Marker(
-      markerId: const MarkerId("to"),
-      position: _toLocation!,
-      infoWindow: const InfoWindow(title: "To"),
-    ));
-
-    _fetchRoute();
   }
 
   List<LatLng> _decodePolyline(String encoded) {
@@ -276,7 +250,7 @@ class RideSearchScreenState extends State<RideSearchScreen> {
                 ),
                 const SizedBox(height: 10),
                 ElevatedButton(
-                  onPressed: _onSearchRoute,
+                  onPressed: _fetchRoute,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.brown,
                     minimumSize: const Size(double.infinity, 50),

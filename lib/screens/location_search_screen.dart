@@ -46,36 +46,33 @@ class LocationSearchScreenState extends State<LocationSearchScreen> {
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       if (data['results'] != null && data['results'].isNotEmpty) {
-        setState(() {
-          _textEditingController.text =
-              data['results'][0]['formatted_address'] ?? 'Unknown Address';
-        });
-        debugPrint("Address fetched: ${_textEditingController.text}");
-      } else {
-        debugPrint("No results found for latlng.");
+        if (mounted) {
+          setState(() {
+            _textEditingController.text =
+                data['results'][0]['formatted_address'] ?? 'Unknown Address';
+          });
+        }
       }
     } else {
-      debugPrint("Error fetching address: ${response.body}");
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to fetch address.")),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Failed to fetch address.")),
+        );
+      }
     }
   }
 
-  Future<void> _fetchLatLngFromAddress(String address) async {
-    final url = Uri.parse(
-      'https://maps.googleapis.com/maps/api/geocode/json?address=$address&key=${widget.googleApiKey}',
-    );
-    final response = await http.get(url);
+  Future<void> _handlePredictionSelection(gmaps.Prediction prediction) async {
+    final placeDetails = await _places.getDetailsByPlaceId(prediction.placeId!);
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      if (data['results'] != null && data['results'].isNotEmpty) {
-        final location = data['results'][0]['geometry']['location'];
-        final lat = location['lat'];
-        final lng = location['lng'];
+    if (placeDetails.status == "OK" && placeDetails.result.geometry != null) {
+      final location = placeDetails.result.geometry!.location;
+      final lat = location.lat;
+      final lng = location.lng;
 
+      if (mounted) {
         setState(() {
+          _textEditingController.text = prediction.description!;
           _selectedLocation = LatLng(lat, lng);
           _selectedMarker = Marker(
             markerId: const MarkerId("selected"),
@@ -96,35 +93,6 @@ class LocationSearchScreenState extends State<LocationSearchScreen> {
     }
   }
 
-  Future<void> _handlePredictionSelection(gmaps.Prediction prediction) async {
-    final placeDetails = await _places.getDetailsByPlaceId(prediction.placeId!);
-
-    if (placeDetails.status == "OK" && placeDetails.result.geometry != null) {
-      final location = placeDetails.result.geometry!.location;
-      final lat = location.lat;
-      final lng = location.lng;
-
-      setState(() {
-        _textEditingController.text = prediction.description!;
-        _selectedLocation = LatLng(lat, lng);
-        _selectedMarker = Marker(
-          markerId: const MarkerId("selected"),
-          position: _selectedLocation!,
-          draggable: true,
-          onDragEnd: (newPosition) {
-            setState(() {
-              _selectedLocation = newPosition;
-            });
-            _fetchAddressFromLatLng(newPosition);
-          },
-        );
-        _mapController.animateCamera(
-          CameraUpdate.newLatLngZoom(_selectedLocation!, 15),
-        );
-      });
-    }
-  }
-
   Future<List<gmaps.Prediction>> _fetchPredictions(String input) async {
     final response = await _places.autocomplete(
       input,
@@ -136,48 +104,50 @@ class LocationSearchScreenState extends State<LocationSearchScreen> {
   Future<void> _setCurrentLocation() async {
     final location = Location();
 
-    // Check location permission
     final permissionStatus = await location.requestPermission();
     if (permissionStatus != PermissionStatus.granted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Location permission denied.")),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Location permission denied.")),
+        );
+      }
       return;
     }
 
     try {
-      // Get current location
       final currentLocation = await location.getLocation();
       final currentLatLng =
-          LatLng(currentLocation.latitude!, currentLocation.longitude!);
+      LatLng(currentLocation.latitude!, currentLocation.longitude!);
 
-      setState(() {
-        _selectedLocation = currentLatLng;
-        _selectedMarker = Marker(
-          markerId: const MarkerId("current"),
-          position: _selectedLocation!,
-          draggable: true,
-          onDragEnd: (newPosition) {
-            setState(() {
-              _selectedLocation = newPosition;
-            });
-            _fetchAddressFromLatLng(newPosition);
-          },
+      if (mounted) {
+        setState(() {
+          _selectedLocation = currentLatLng;
+          _selectedMarker = Marker(
+            markerId: const MarkerId("current"),
+            position: _selectedLocation!,
+            draggable: true,
+            onDragEnd: (newPosition) {
+              setState(() {
+                _selectedLocation = newPosition;
+              });
+              _fetchAddressFromLatLng(newPosition);
+            },
+          );
+        });
+
+        _mapController.animateCamera(
+          CameraUpdate.newLatLngZoom(_selectedLocation!, 15),
         );
-      });
 
-      // Animate camera to current location
-      _mapController.animateCamera(
-        CameraUpdate.newLatLngZoom(_selectedLocation!, 15),
-      );
-
-      // Fetch and set address for the current location
-      await _fetchAddressFromLatLng(currentLatLng);
+        // Fetch and set address for current location
+        await _fetchAddressFromLatLng(currentLatLng);
+      }
     } catch (e) {
-      debugPrint("Error getting current location: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to fetch current location.")),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Failed to fetch current location.")),
+        );
+      }
     }
   }
 
@@ -189,9 +159,11 @@ class LocationSearchScreenState extends State<LocationSearchScreen> {
         'lng': _selectedLocation!.longitude,
       });
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select a location.")),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please select a location.")),
+        );
+      }
     }
   }
 
@@ -221,6 +193,10 @@ class LocationSearchScreenState extends State<LocationSearchScreen> {
                       onPressed: () async {
                         final predictions = await _fetchPredictions(
                             _textEditingController.text);
+
+                        if (!mounted) {
+                          return;
+                        }
                         showModalBottomSheet(
                           context: context,
                           builder: (context) {

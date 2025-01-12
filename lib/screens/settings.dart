@@ -33,18 +33,6 @@ class SettingsState extends State<Settings> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller) {
-    return TextField(
-      controller: controller,
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8.0),
-        ),
-      ),
-    );
-  }
-
   Widget _buildSettingOption(String title, VoidCallback onTap) {
     return ListTile(
       title: Text(title),
