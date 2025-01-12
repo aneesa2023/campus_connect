@@ -1,13 +1,14 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class PostRideDetails extends StatefulWidget {
   const PostRideDetails({super.key});
 
   @override
-  _PostRideDetailsState createState() => _PostRideDetailsState();
+  PostRideDetailsState createState() => PostRideDetailsState();
 }
 
-class _PostRideDetailsState extends State<PostRideDetails> {
+class PostRideDetailsState extends State<PostRideDetails> {
   final TextEditingController _capacityController = TextEditingController();
   final TextEditingController _vehicleTypeController = TextEditingController();
   final TextEditingController _vehicleModelController = TextEditingController();
@@ -235,8 +236,10 @@ class _PostRideDetailsState extends State<PostRideDetails> {
                       'note': _noteToRidersController.text,
                       'options': _selectedOptions,
                     });
-                    print(
+                    if (kDebugMode) {
+                      print(
                         "ride details: ${_capacityController.text}, ${_selectedVehicle!}, ${_noteToRidersController.text}, $_selectedOptions");
+                    }
                     if (_selectedVehicle!.isNotEmpty) {
                       Navigator.pushNamed(context, '/home');
                     } else {

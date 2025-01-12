@@ -10,10 +10,10 @@ class PostRideLocationScreen extends StatefulWidget {
   const PostRideLocationScreen({super.key});
 
   @override
-  _PostRideLocationScreenState createState() => _PostRideLocationScreenState();
+  PostRideLocationScreenState createState() => PostRideLocationScreenState();
 }
 
-class _PostRideLocationScreenState extends State<PostRideLocationScreen> {
+class PostRideLocationScreenState extends State<PostRideLocationScreen> {
   final TextEditingController _fromController = TextEditingController();
   final TextEditingController _toController = TextEditingController();
   String? _selectedDateTime;
@@ -22,7 +22,7 @@ class _PostRideLocationScreenState extends State<PostRideLocationScreen> {
   LatLng? _toLocation;
 
   late GoogleMapController _mapController;
-  Set<Marker> _markers = {};
+  final Set<Marker> _markers = {};
   Polyline? _routePolyline;
 
   final String googleApiKey = Constants.googleApiKey;
@@ -246,8 +246,9 @@ class _PostRideLocationScreenState extends State<PostRideLocationScreen> {
           Expanded(
             child: GoogleMap(
               initialCameraPosition: const CameraPosition(
-                target: LatLng(37.7749, -122.4194),
-                zoom: 6,
+                target: LatLng(
+                    40.500618, -74.447449), // Rutgers University, New Brunswick
+                zoom: 15,
               ),
               onMapCreated: (controller) {
                 _mapController = controller;

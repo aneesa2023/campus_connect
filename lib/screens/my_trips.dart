@@ -4,10 +4,10 @@ class MyTripsScreen extends StatefulWidget {
   const MyTripsScreen({super.key});
 
   @override
-  _MyTripsScreenState createState() => _MyTripsScreenState();
+  MyTripsScreenState createState() => MyTripsScreenState();
 }
 
-class _MyTripsScreenState extends State<MyTripsScreen>
+class MyTripsScreenState extends State<MyTripsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 

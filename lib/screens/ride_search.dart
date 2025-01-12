@@ -1,7 +1,6 @@
 import 'package:campus_connect/screens/utilities/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'location_search_screen.dart';
@@ -10,10 +9,10 @@ class RideSearchScreen extends StatefulWidget {
   const RideSearchScreen({super.key});
 
   @override
-  _RideSearchScreenState createState() => _RideSearchScreenState();
+  RideSearchScreenState createState() => RideSearchScreenState();
 }
 
-class _RideSearchScreenState extends State<RideSearchScreen> {
+class RideSearchScreenState extends State<RideSearchScreen> {
   final TextEditingController _fromController = TextEditingController();
   final TextEditingController _toController = TextEditingController();
   String? _selectedDateTime;
@@ -22,7 +21,7 @@ class _RideSearchScreenState extends State<RideSearchScreen> {
   LatLng? _toLocation;
 
   late GoogleMapController _mapController;
-  Set<Marker> _markers = {};
+  final Set<Marker> _markers = {};
   Polyline? _routePolyline;
 
   late String googleApiKey = Constants.googleApiKey;
@@ -293,8 +292,9 @@ class _RideSearchScreenState extends State<RideSearchScreen> {
           Expanded(
             child: GoogleMap(
               initialCameraPosition: const CameraPosition(
-                target: LatLng(37.7749, -122.4194),
-                zoom: 6,
+                target: LatLng(
+                    40.500618, -74.447449), // Rutgers University, New Brunswick
+                zoom: 15,
               ),
               onMapCreated: (controller) {
                 _mapController = controller;

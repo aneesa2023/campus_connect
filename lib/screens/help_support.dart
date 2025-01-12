@@ -4,10 +4,10 @@ class HelpAndSupportScreen extends StatefulWidget {
   const HelpAndSupportScreen({super.key});
 
   @override
-  _HelpAndSupportScreenState createState() => _HelpAndSupportScreenState();
+  HelpAndSupportScreenState createState() => HelpAndSupportScreenState();
 }
 
-class _HelpAndSupportScreenState extends State<HelpAndSupportScreen> {
+class HelpAndSupportScreenState extends State<HelpAndSupportScreen> {
   final TextEditingController _subjectController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _reportedUserController = TextEditingController();

@@ -1,5 +1,8 @@
+import 'package:campus_connect/screens/utilities/constants.dart';
 import 'package:flutter/material.dart';
-import 'package:google_places_flutter/google_places_flutter.dart';
+import 'package:google_maps_webservice/places.dart' as gmaps;
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:location/location.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -14,18 +17,49 @@ class LocationSearchScreen extends StatefulWidget {
   });
 
   @override
-  _LocationSearchScreenState createState() => _LocationSearchScreenState();
+  LocationSearchScreenState createState() => LocationSearchScreenState();
 }
 
-class _LocationSearchScreenState extends State<LocationSearchScreen> {
+class LocationSearchScreenState extends State<LocationSearchScreen> {
   final TextEditingController _textEditingController = TextEditingController();
-  double? _manualLat;
-  double? _manualLng;
+  final gmaps.GoogleMapsPlaces _places;
+
+  LatLng? _selectedLocation;
+  Marker? _selectedMarker;
+  late GoogleMapController _mapController;
+
+  LocationSearchScreenState()
+      : _places = gmaps.GoogleMapsPlaces(apiKey: Constants.googleApiKey);
 
   @override
   void dispose() {
     _textEditingController.dispose();
     super.dispose();
+  }
+
+  Future<void> _fetchAddressFromLatLng(LatLng position) async {
+    final url = Uri.parse(
+      'https://maps.googleapis.com/maps/api/geocode/json?latlng=${position.latitude},${position.longitude}&key=${widget.googleApiKey}',
+    );
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      if (data['results'] != null && data['results'].isNotEmpty) {
+        setState(() {
+          _textEditingController.text =
+              data['results'][0]['formatted_address'] ?? 'Unknown Address';
+        });
+        debugPrint("Address fetched: ${_textEditingController.text}");
+      } else {
+        debugPrint("No results found for latlng.");
+      }
+    } else {
+      debugPrint("Error fetching address: ${response.body}");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to fetch address.")),
+      );
+    }
   }
 
   Future<void> _fetchLatLngFromAddress(String address) async {
@@ -36,78 +70,127 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      debugPrint("Geocode API Response: $data");
       if (data['results'] != null && data['results'].isNotEmpty) {
         final location = data['results'][0]['geometry']['location'];
+        final lat = location['lat'];
+        final lng = location['lng'];
+
         setState(() {
-          _manualLat = location['lat'];
-          _manualLng = location['lng'];
+          _selectedLocation = LatLng(lat, lng);
+          _selectedMarker = Marker(
+            markerId: const MarkerId("selected"),
+            position: _selectedLocation!,
+            draggable: true,
+            onDragEnd: (newPosition) {
+              setState(() {
+                _selectedLocation = newPosition;
+              });
+              _fetchAddressFromLatLng(newPosition);
+            },
+          );
+          _mapController.animateCamera(
+            CameraUpdate.newLatLngZoom(_selectedLocation!, 15),
+          );
         });
       }
-    } else {
-      debugPrint("Failed Geocode API Response: ${response.body}");
+    }
+  }
+
+  Future<void> _handlePredictionSelection(gmaps.Prediction prediction) async {
+    final placeDetails = await _places.getDetailsByPlaceId(prediction.placeId!);
+
+    if (placeDetails.status == "OK" && placeDetails.result.geometry != null) {
+      final location = placeDetails.result.geometry!.location;
+      final lat = location.lat;
+      final lng = location.lng;
+
+      setState(() {
+        _textEditingController.text = prediction.description!;
+        _selectedLocation = LatLng(lat, lng);
+        _selectedMarker = Marker(
+          markerId: const MarkerId("selected"),
+          position: _selectedLocation!,
+          draggable: true,
+          onDragEnd: (newPosition) {
+            setState(() {
+              _selectedLocation = newPosition;
+            });
+            _fetchAddressFromLatLng(newPosition);
+          },
+        );
+        _mapController.animateCamera(
+          CameraUpdate.newLatLngZoom(_selectedLocation!, 15),
+        );
+      });
+    }
+  }
+
+  Future<List<gmaps.Prediction>> _fetchPredictions(String input) async {
+    final response = await _places.autocomplete(
+      input,
+      components: [gmaps.Component(gmaps.Component.country, "us")],
+    );
+    return response.predictions;
+  }
+
+  Future<void> _setCurrentLocation() async {
+    final location = Location();
+
+    // Check location permission
+    final permissionStatus = await location.requestPermission();
+    if (permissionStatus != PermissionStatus.granted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to connect to Geocoding API.")),
+        const SnackBar(content: Text("Location permission denied.")),
+      );
+      return;
+    }
+
+    try {
+      // Get current location
+      final currentLocation = await location.getLocation();
+      final currentLatLng =
+          LatLng(currentLocation.latitude!, currentLocation.longitude!);
+
+      setState(() {
+        _selectedLocation = currentLatLng;
+        _selectedMarker = Marker(
+          markerId: const MarkerId("current"),
+          position: _selectedLocation!,
+          draggable: true,
+          onDragEnd: (newPosition) {
+            setState(() {
+              _selectedLocation = newPosition;
+            });
+            _fetchAddressFromLatLng(newPosition);
+          },
+        );
+      });
+
+      // Animate camera to current location
+      _mapController.animateCamera(
+        CameraUpdate.newLatLngZoom(_selectedLocation!, 15),
+      );
+
+      // Fetch and set address for the current location
+      await _fetchAddressFromLatLng(currentLatLng);
+    } catch (e) {
+      debugPrint("Error getting current location: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to fetch current location.")),
       );
     }
   }
 
-  void _handlePredictionSelection(prediction) async {
-    if (prediction == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("No prediction found.")),
-      );
-      return;
-    }
-
-    debugPrint("Prediction Clicked: ${prediction.description}");
-
-    // Validate description
-    if (prediction.description == null || prediction.description!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Selected location has no description.")),
-      );
-      return;
-    }
-
-    // Extract latitude and longitude
-    final placeId = prediction.placeId;
-    final url = Uri.parse(
-      'https://maps.googleapis.com/maps/api/place/details/json?place_id=$placeId&key=${widget.googleApiKey}',
-    );
-    final response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      if (data['result'] != null &&
-          data['result']['geometry'] != null &&
-          data['result']['geometry']['location'] != null) {
-        final location = data['result']['geometry']['location'];
-        final lat = location['lat'];
-        final lng = location['lng'];
-
-        debugPrint("Lat: $lat, Lng: $lng");
-
-        // Update text field and pass the data
-        setState(() {
-          _textEditingController.text = prediction.description!;
-        });
-
-        Navigator.pop(context, {
-          'description': prediction.description,
-          'lat': lat,
-          'lng': lng,
-        });
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Failed to fetch location details.")),
-        );
-      }
+  void _confirmLocation() {
+    if (_selectedLocation != null) {
+      Navigator.pop(context, {
+        'description': _textEditingController.text,
+        'lat': _selectedLocation!.latitude,
+        'lng': _selectedLocation!.longitude,
+      });
     } else {
-      debugPrint("Place Details API Failed: ${response.body}");
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text("Failed to connect to Place Details API.")),
+        const SnackBar(content: Text("Please select a location.")),
       );
     }
   }
@@ -120,71 +203,113 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
         backgroundColor: Colors.brown,
         centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            GooglePlaceAutoCompleteTextField(
-              googleAPIKey: widget.googleApiKey,
-              textEditingController: _textEditingController,
-              inputDecoration: InputDecoration(
-                labelText: "Search or Type Location",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    _textEditingController.clear();
-                  },
-                ),
-              ),
-              debounceTime: 500,
-              countries: ["us"],
-              isLatLngRequired: true,
-              itemClick: (prediction) {
-                _handlePredictionSelection(prediction);
-              },
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () async {
-                final enteredText = _textEditingController.text;
-                if (enteredText.isNotEmpty) {
-                  await _fetchLatLngFromAddress(enteredText);
-
-                  if (_manualLat != null && _manualLng != null) {
-                    Navigator.pop(context, {
-                      'description': enteredText,
-                      'lat': _manualLat,
-                      'lng': _manualLng,
-                    });
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Please enter a valid address."),
-                      ),
-                    );
-                  }
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("Please enter or select a location."),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                TextField(
+                  controller: _textEditingController,
+                  decoration: InputDecoration(
+                    labelText: "Search or Type Location",
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.brown,
-                minimumSize: const Size(double.infinity, 50),
-              ),
-              child: const Text(
-                "Confirm Location",
-                style: TextStyle(color: Colors.white),
-              ),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.search),
+                      onPressed: () async {
+                        final predictions = await _fetchPredictions(
+                            _textEditingController.text);
+                        showModalBottomSheet(
+                          context: context,
+                          builder: (context) {
+                            return ListView.builder(
+                              itemCount: predictions.length,
+                              itemBuilder: (context, index) {
+                                final prediction = predictions[index];
+                                return ListTile(
+                                  title: Text(prediction.description ??
+                                      "Unknown Location"),
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                    _handlePredictionSelection(prediction);
+                                  },
+                                );
+                              },
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _setCurrentLocation,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          minimumSize: const Size(double.infinity, 50),
+                        ),
+                        child: const Text(
+                          "Use Current Location",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _confirmLocation,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.brown,
+                          minimumSize: const Size(double.infinity, 50),
+                        ),
+                        child: const Text(
+                          "Confirm Location",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+          Expanded(
+            child: GoogleMap(
+              initialCameraPosition: const CameraPosition(
+                target: LatLng(
+                    40.500618, -74.447449), // Rutgers University, New Brunswick
+                zoom: 15,
+              ),
+              markers: _selectedMarker != null ? {_selectedMarker!} : {},
+              onMapCreated: (controller) {
+                _mapController = controller;
+              },
+              onTap: (position) {
+                setState(() {
+                  _selectedLocation = position;
+                  _selectedMarker = Marker(
+                    markerId: const MarkerId("selected"),
+                    position: position,
+                    draggable: true,
+                    onDragEnd: (newPosition) {
+                      setState(() {
+                        _selectedLocation = newPosition;
+                      });
+                      _fetchAddressFromLatLng(newPosition);
+                    },
+                  );
+                });
+                _fetchAddressFromLatLng(position);
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

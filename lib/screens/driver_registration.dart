@@ -6,10 +6,11 @@ class RegisterDriverScreen extends StatefulWidget {
   const RegisterDriverScreen({super.key});
 
   @override
-  _RegisterDriverScreenState createState() => _RegisterDriverScreenState();
+  RegisterDriverScreenState createState() =>
+      RegisterDriverScreenState(); // Made class public
 }
 
-class _RegisterDriverScreenState extends State<RegisterDriverScreen> {
+class RegisterDriverScreenState extends State<RegisterDriverScreen> {
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _licenseNumberController =
       TextEditingController();

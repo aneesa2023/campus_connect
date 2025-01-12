@@ -1,4 +1,5 @@
 import 'package:campus_connect/screens/custom_drawer.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -31,7 +32,9 @@ class HomePage extends StatelessWidget {
             // Post a Ride Button
             ElevatedButton(
               onPressed: () async {
-                bool isRegistered = await _isUserRegistered();
+                final isRegistered = await _isUserRegistered();
+
+                if (!context.mounted) return;
 
                 if (isRegistered) {
                   // Navigate directly to Post a Ride page
@@ -40,9 +43,19 @@ class HomePage extends StatelessWidget {
                   // Navigate to Register Driver page
                   final result =
                       await Navigator.pushNamed(context, '/registerDriver');
+
+                  if (!context.mounted) return;
+
                   if (result != null) {
-                    print(result); // Example: {'licenseNumber': '1234', ...}
+                    if (kDebugMode) {
+                      print(result);
+                    } // Example: {'licenseNumber': '1234', ...}
                     await _setUserRegistered();
+
+                    if (!context.mounted) {
+                      return;
+                    }
+
                     Navigator.pushNamed(context, '/postRide');
                   }
                 }
