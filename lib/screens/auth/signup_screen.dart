@@ -1,11 +1,57 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class SignUpScreen extends StatelessWidget {
   final TextEditingController nameController = TextEditingController();
+  final TextEditingController userNameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
   SignUpScreen({super.key});
+
+  Future<void> signUp(BuildContext context) async {
+    final String backendUrl = "http://127.0.0.1:8000/signup";
+    final Map<String, String> headers = {"Content-Type": "application/json"};
+    final Map<String, dynamic> body = {
+      "full_name": nameController.text,
+      "username": userNameController.text,
+      "email": emailController.text,
+      "password": passwordController.text,
+    };
+
+    try {
+      final response = await http.post(
+        Uri.parse(backendUrl),
+        headers: headers,
+        body: json.encode(body),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        // Handle successful signup
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Signup successful! Please confirm your email."),
+          ),
+        );
+        Navigator.pushNamed(context, '/confirm_account');
+      } else {
+        final error = json.decode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error: ${error['detail'] ?? 'Signup failed'}"),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("An error occurred: $e"),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +79,15 @@ class SignUpScreen extends StatelessWidget {
             ),
             SizedBox(height: 20),
             TextField(
+              controller: userNameController,
+              decoration: InputDecoration(
+                labelText: 'User Name',
+                prefixIcon: Icon(Icons.person),
+                border: OutlineInputBorder(),
+              ),
+            ),
+            SizedBox(height: 20),
+            TextField(
               controller: emailController,
               decoration: InputDecoration(
                 labelText: 'Email Address',
@@ -52,9 +107,7 @@ class SignUpScreen extends StatelessWidget {
             ),
             SizedBox(height: 30),
             ElevatedButton(
-              onPressed: () {
-                Navigator.pushNamed(context, '/home');
-              },
+              onPressed: () => signUp(context),
               style: ElevatedButton.styleFrom(
                 minimumSize: Size(double.infinity, 50),
               ),
