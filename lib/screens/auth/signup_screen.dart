@@ -1,56 +1,77 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:campus_connect/services/api_service.dart';
 
-class SignUpScreen extends StatelessWidget {
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController userNameController = TextEditingController();
+class SignUpScreen extends StatefulWidget {
+  const SignUpScreen({super.key});
+
+  @override
+  SignUpScreenState createState() => SignUpScreenState();
+}
+
+class SignUpScreenState extends State<SignUpScreen> {
+  final TextEditingController usernameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-  SignUpScreen({super.key});
+  bool _obscureText = true;
+  bool _isLoading = false;
 
-  Future<void> signUp(BuildContext context) async {
-    final String backendUrl = "http://127.0.0.1:8000/signup";
-    final Map<String, String> headers = {"Content-Type": "application/json"};
+  Future<void> signUp() async {
+    if (usernameController.text.isEmpty ||
+        emailController.text.isEmpty ||
+        passwordController.text.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("All fields are required."),
+          ),
+        );
+      }
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
     final Map<String, dynamic> body = {
-      "full_name": nameController.text,
-      "username": userNameController.text,
+      "username": usernameController.text,
       "email": emailController.text,
       "password": passwordController.text,
     };
 
     try {
-      final response = await http.post(
-        Uri.parse(backendUrl),
-        headers: headers,
-        body: json.encode(body),
-      );
+      await ApiService.postRequest("signup", body);
+      if (!mounted) return;
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        // Handle successful signup
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Signup successful! Please confirm your email."),
-          ),
-        );
-        Navigator.pushNamed(context, '/confirm_account');
-      } else {
-        final error = json.decode(response.body);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Error: ${error['detail'] ?? 'Signup failed'}"),
-          ),
-        );
-      }
-    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("An error occurred: $e"),
+        const SnackBar(
+          content: Text(
+            "Signup successful! Check your email to confirm.",
+          ),
         ),
       );
+
+      Navigator.pushNamed(context, '/confirm_account');
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: ${e.toString()}")),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
+  }
+
+  void _togglePasswordVisibility() {
+    setState(() {
+      _obscureText = !_obscureText;
+    });
   }
 
   @override
@@ -61,66 +82,66 @@ class SignUpScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
+            const Text(
               'Create Account',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 30),
+            const SizedBox(height: 30),
             TextField(
-              controller: nameController,
-              decoration: InputDecoration(
-                labelText: 'Full Name',
+              controller: usernameController,
+              decoration: const InputDecoration(
+                labelText: 'Username',
                 prefixIcon: Icon(Icons.person),
                 border: OutlineInputBorder(),
               ),
             ),
-            SizedBox(height: 20),
-            TextField(
-              controller: userNameController,
-              decoration: InputDecoration(
-                labelText: 'User Name',
-                prefixIcon: Icon(Icons.person),
-                border: OutlineInputBorder(),
-              ),
-            ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             TextField(
               controller: emailController,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Email Address',
                 prefixIcon: Icon(Icons.email),
                 border: OutlineInputBorder(),
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             TextField(
               controller: passwordController,
+              obscureText: _obscureText,
               decoration: InputDecoration(
                 labelText: 'Password',
-                prefixIcon: Icon(Icons.lock),
-                border: OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.lock),
+                border: const OutlineInputBorder(),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                      _obscureText ? Icons.visibility_off : Icons.visibility),
+                  onPressed: _togglePasswordVisibility,
+                ),
               ),
-              obscureText: true,
             ),
-            SizedBox(height: 30),
+            const SizedBox(height: 30),
             ElevatedButton(
-              onPressed: () => signUp(context),
+              onPressed: _isLoading ? null : signUp,
               style: ElevatedButton.styleFrom(
-                minimumSize: Size(double.infinity, 50),
+                minimumSize: const Size(double.infinity, 50),
               ),
-              child: Text('Sign Up'),
+              child: _isLoading
+                  ? const CircularProgressIndicator(
+                      color: Colors.white,
+                    )
+                  : const Text('Sign Up'),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('Already have an account?'),
+                const Text('Already have an account?'),
                 TextButton(
                   onPressed: () => Navigator.pushNamed(context, '/login'),
-                  child: Text('Sign In'),
+                  child: const Text('Sign In'),
                 ),
               ],
             ),

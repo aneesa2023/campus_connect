@@ -1,68 +1,79 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:campus_connect/services/api_service.dart';
 
-class LoginScreen extends StatelessWidget {
-  LoginScreen({super.key});
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
-  final TextEditingController emailController = TextEditingController();
+  @override
+  LoginScreenState createState() => LoginScreenState();
+}
+
+class LoginScreenState extends State<LoginScreen> {
+  final TextEditingController userNameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  bool _obscureText = true;
+  bool _isLoading = false;
 
-  Future<void> login(BuildContext context) async {
-    final String backendUrl = "http://127.0.0.1:8000/signin";
-    final Map<String, String> headers = {"Content-Type": "application/json"};
-
-    // Validate input fields
-    if (emailController.text.isEmpty || passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Username and Password cannot be empty.")),
-      );
+  Future<void> login() async {
+    if (userNameController.text.isEmpty || passwordController.text.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              "Username/Email and Password are required.",
+            ),
+          ),
+        );
+      }
       return;
     }
 
+    setState(() {
+      _isLoading = true;
+    });
+
     final Map<String, dynamic> body = {
-      "email": emailController.text,
+      "username": userNameController.text,
       "password": passwordController.text,
     };
 
     try {
-      final response = await http.post(
-        Uri.parse(backendUrl),
-        headers: headers,
-        body: json.encode(body),
-      );
+      final response = await ApiService.postRequest("signin", body);
+      if (!mounted) return;
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Login successful!")),
-        );
-
-        // Navigate to Home Page
-        Navigator.pushNamed(context, '/home');
-      } else if (response.statusCode == 400 || response.statusCode == 401) {
-        // Handle known backend errors
-        final error = json.decode(response.body);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Error: ${error['detail'] ?? 'Invalid credentials'}"),
-          ),
-        );
-      } else {
-        // Handle unexpected backend errors
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Error: Unexpected error occurred (${response.statusCode})."),
-          ),
-        );
-      }
-    } catch (e) {
-      // Handle network errors
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("An error occurred: $e")),
+        const SnackBar(
+          content: Text("Login successful!"),
+        ),
       );
+
+      Navigator.pushNamed(
+        context,
+        '/home',
+        arguments: {
+          "cognito_access_token": response['cognito_access_token'],
+          "custom_access_token": response['custom_access_token'],
+        },
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: ${e.toString()}")),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
+  }
+
+  void _togglePasswordVisibility() {
+    setState(() {
+      _obscureText = !_obscureText;
+    });
   }
 
   @override
@@ -75,47 +86,65 @@ class LoginScreen extends StatelessWidget {
           children: [
             const Text(
               'Login',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 30),
             TextField(
-              controller: emailController,
+              controller: userNameController,
               decoration: const InputDecoration(
-                labelText: 'Email Address',
-                prefixIcon: Icon(Icons.email),
+                labelText: 'Username or Email',
+                prefixIcon: Icon(Icons.person),
                 border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 20),
             TextField(
               controller: passwordController,
-              decoration: const InputDecoration(
+              obscureText: _obscureText,
+              decoration: InputDecoration(
                 labelText: 'Password',
-                prefixIcon: Icon(Icons.lock),
-                border: OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.lock),
+                border: const OutlineInputBorder(),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscureText ? Icons.visibility_off : Icons.visibility,
+                  ),
+                  onPressed: _togglePasswordVisibility,
+                ),
               ),
-              obscureText: true,
             ),
             const SizedBox(height: 20),
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: () {
-                  // Handle Forgot Password
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Forgot Password not implemented yet.")),
+                    const SnackBar(
+                      content: Text(
+                        "Forgot Password not implemented yet.",
+                      ),
+                    ),
                   );
                 },
-                child: const Text('Forgot Password?'),
+                child: const Text(
+                  'Forgot Password?',
+                ),
               ),
             ),
             const SizedBox(height: 30),
             ElevatedButton(
-              onPressed: () => login(context),
+              onPressed: _isLoading ? null : login, // Disable when loading
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 50),
               ),
-              child: const Text('Login'),
+              child: _isLoading
+                  ? const CircularProgressIndicator(
+                      color: Colors.white,
+                    )
+                  : const Text('Login'),
             ),
             const SizedBox(height: 20),
             Row(

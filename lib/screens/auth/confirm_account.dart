@@ -1,43 +1,66 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:campus_connect/services/api_service.dart';
 
-class ConfirmAccountScreen extends StatelessWidget {
+class ConfirmAccountScreen extends StatefulWidget {
+  const ConfirmAccountScreen({super.key});
+
+  @override
+  ConfirmAccountScreenState createState() => ConfirmAccountScreenState();
+}
+
+class ConfirmAccountScreenState extends State<ConfirmAccountScreen> {
   final TextEditingController usernameController = TextEditingController();
-  final TextEditingController confirmationCodeController = TextEditingController();
+  final TextEditingController confirmationCodeController =
+      TextEditingController();
 
-  ConfirmAccountScreen({super.key});
+  bool _isLoading = false;
 
-  Future<void> confirmAccount(BuildContext context) async {
-    final String backendUrl = "http://127.0.0.1:8000/confirm"; // Update this to your actual backend URL
-    final Map<String, String> headers = {"Content-Type": "application/json"};
+  Future<void> confirmAccount() async {
+    if (usernameController.text.isEmpty ||
+        confirmationCodeController.text.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Both fields are required."),
+          ),
+        );
+      }
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
     final Map<String, dynamic> body = {
       "username": usernameController.text,
       "confirmation_code": confirmationCodeController.text,
     };
 
     try {
-      final response = await http.post(
-        Uri.parse(backendUrl),
-        headers: headers,
-        body: json.encode(body),
+      await ApiService.postRequest("confirm", body);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Account confirmed! Please sign in."),
+        ),
       );
 
-      if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Account confirmed successfully! Please sign in.")),
-        );
-        Navigator.pushNamed(context, '/login'); // Navigate to the login screen
-      } else {
-        final error = json.decode(response.body);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: ${error['detail'] ?? 'Failed to confirm account'}")),
-        );
-      }
+      Navigator.pushNamed(context, '/login');
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("An error occurred: $e")),
+        SnackBar(
+          content: Text("Error: ${e.toString()}"),
+        ),
       );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -54,9 +77,9 @@ class ConfirmAccountScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
+            const Text(
               'Confirm Your Account',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
@@ -81,11 +104,15 @@ class ConfirmAccountScreen extends StatelessWidget {
             ),
             const SizedBox(height: 30),
             ElevatedButton(
-              onPressed: () => confirmAccount(context),
+              onPressed: _isLoading ? null : confirmAccount,
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 50),
               ),
-              child: const Text('Confirm Account'),
+              child: _isLoading
+                  ? const CircularProgressIndicator(
+                      color: Colors.white,
+                    )
+                  : const Text('Confirm Account'),
             ),
           ],
         ),
