@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 class ApiService {
   static Future<Map<String, dynamic>> postRequest(
       String endpoint, Map<String, dynamic> body) async {
-    final Uri url = Uri.parse("${ApiConfig.baseUrl}/$endpoint");
+    final Uri url = Uri.parse("${ApiConfig.authBaseUrl}/$endpoint");
 
     try {
       final response = await http.post(
@@ -18,27 +18,28 @@ class ApiService {
         return jsonDecode(response.body);
       } else {
         throw Exception(
-            "Error: ${jsonDecode(response.body)['message'] ?? response.body}");
+          "Error: ${jsonDecode(response.body)['message'] ?? response.body}",
+        );
       }
     } catch (e) {
       throw Exception("Failed to connect to server: $e");
     }
   }
 
-  static Future<Map<String, dynamic>> getRequest(String endpoint) async {
-    final Uri url = Uri.parse("${ApiConfig.baseUrl}$endpoint");
+  static Future<Map<String, dynamic>> getRequest(String endpoint,
+      {Map<String, String>? headers}) async {
+    final Uri url = Uri.parse("${ApiConfig.authBaseUrl}$endpoint");
 
     try {
       final response = await http.get(
         url,
-        headers: {"Content-Type": "application/json"},
+        headers: headers ?? {"Content-Type": "application/json"},
       );
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
-        throw Exception(
-            "Error: ${jsonDecode(response.body)['message'] ?? response.body}");
+        throw Exception("Error: ${response.body}");
       }
     } catch (e) {
       throw Exception("Failed to connect to server: $e");

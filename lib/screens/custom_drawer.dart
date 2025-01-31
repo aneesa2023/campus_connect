@@ -29,6 +29,9 @@ class CustomDrawer extends StatelessWidget {
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
+                _buildDrawerItem(Icons.home, 'Home', () {
+                  Navigator.pushNamed(context, '/home');
+                }),
                 _buildDrawerItem(Icons.person, 'Profile', () {
                   Navigator.pushNamed(context, '/view_profile');
                 }),

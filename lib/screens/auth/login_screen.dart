@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:campus_connect/services/api_service.dart';
+import 'package:campus_connect/services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -20,7 +21,7 @@ class LoginScreenState extends State<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              "Username/Email and Password are required.",
+              "Username and Password are required.",
             ),
           ),
         );
@@ -41,25 +42,31 @@ class LoginScreenState extends State<LoginScreen> {
       final response = await ApiService.postRequest("signin", body);
       if (!mounted) return;
 
+      String cognitoAccessToken = response['cognito_access_token'];
+
+      await AuthService.saveToken(cognitoAccessToken);
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Login successful!"),
         ),
       );
 
-      Navigator.pushNamed(
-        context,
-        '/home',
-        arguments: {
-          "cognito_access_token": response['cognito_access_token'],
-          "custom_access_token": response['custom_access_token'],
-        },
-      );
+      Navigator.pushNamed(context, '/home');
     } catch (e) {
       if (!mounted) return;
+      String errorMessage = "An unexpected error occurred";
+
+      if (e.toString().contains("UserNotConfirmedException")) {
+        errorMessage =
+            "Your account is not confirmed. Please check your email.";
+        Navigator.pushNamed(context, '/confirm_account');
+      } else {
+        errorMessage = "Error: ${e.toString()}";
+      }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: ${e.toString()}")),
+        SnackBar(content: Text(errorMessage)),
       );
     } finally {
       if (mounted) {
@@ -95,7 +102,7 @@ class LoginScreenState extends State<LoginScreen> {
             TextField(
               controller: userNameController,
               decoration: const InputDecoration(
-                labelText: 'Username or Email',
+                labelText: 'Username',
                 prefixIcon: Icon(Icons.person),
                 border: OutlineInputBorder(),
               ),
@@ -134,9 +141,10 @@ class LoginScreenState extends State<LoginScreen> {
                 ),
               ),
             ),
+
             const SizedBox(height: 30),
             ElevatedButton(
-              onPressed: _isLoading ? null : login, // Disable when loading
+              onPressed: _isLoading ? null : login,
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 50),
               ),

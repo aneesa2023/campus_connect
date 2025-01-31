@@ -49,6 +49,12 @@
     <string>Your location is required to show nearby places and routes.</string>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
     <string>Your location is required to provide ride services.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>We need access to your photo library for profile and vehicle license uploads.</string>
+
+    <key>NSCameraUsageDescription</key>
+    <string>We need access to your camera for profile and vehicle license uploads.</string>
+
 
 </dict>
 </plist>
