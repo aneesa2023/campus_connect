@@ -38,7 +38,11 @@ class ConfirmAccountScreenState extends State<ConfirmAccountScreen> {
     };
 
     try {
-      await ApiService.postRequest("confirm", body);
+      await ApiService.postRequest(
+        module: 'auth',
+        endpoint: 'confirm',
+        body: body,
+      );
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

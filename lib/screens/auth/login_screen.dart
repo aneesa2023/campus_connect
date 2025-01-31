@@ -39,7 +39,11 @@ class LoginScreenState extends State<LoginScreen> {
     };
 
     try {
-      final response = await ApiService.postRequest("signin", body);
+      final response = await ApiService.postRequest(
+        module: 'auth',
+        endpoint: 'signin',
+        body: body,
+      );
       if (!mounted) return;
 
       String cognitoAccessToken = response['cognito_access_token'];
@@ -141,7 +145,6 @@ class LoginScreenState extends State<LoginScreen> {
                 ),
               ),
             ),
-
             const SizedBox(height: 30),
             ElevatedButton(
               onPressed: _isLoading ? null : login,

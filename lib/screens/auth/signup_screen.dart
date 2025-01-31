@@ -41,7 +41,11 @@ class SignUpScreenState extends State<SignUpScreen> {
     };
 
     try {
-      await ApiService.postRequest("signup", body);
+      await ApiService.postRequest(
+        body: body,
+        module: 'auth',
+        endpoint: 'signup',
+      );
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(

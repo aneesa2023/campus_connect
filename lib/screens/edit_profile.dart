@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
-import 'dart:io';
+import 'package:campus_connect/services/api_service.dart';
+import 'package:campus_connect/services/auth_service.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -11,43 +13,117 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class EditProfileScreenState extends State<EditProfileScreen> {
+  // Controllers for user profile
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _collegeNameController = TextEditingController();
-  final TextEditingController _collegeEmailIdController =
-      TextEditingController();
   final TextEditingController _collegeIdController = TextEditingController();
+
+  // Controllers for vehicle input fields
   final TextEditingController _vehicleModelController = TextEditingController();
   final TextEditingController _licensePlateController = TextEditingController();
-  final TextEditingController _licenseNumberController =
-      TextEditingController();
 
   File? _profileImage;
-  File? _licenseImage;
+  String? _profileImageUrl;
   List<Map<String, String>> _vehicles = [];
   int? _editingIndex;
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _nameController.text = 'John Doe';
-    _emailController.text = 'johndoe@example.com';
-    _phoneController.text = '123-456-7890';
-    _collegeNameController.text = 'Rutgers University';
-    _collegeEmailIdController.text = 'netid@rutgers.edu';
-    _collegeIdController.text = 'netid123';
-
-    _vehicles = [
-      {
-        'model': 'Toyota Corolla',
-        'license': 'XYZ123',
-        'license_number': 'ABC987'
-      },
-    ];
+    _fetchUserProfile();
   }
 
-  // 📷 Pick Profile Image
+  /// **Fetch User Profile & Vehicles**
+  Future<void> _fetchUserProfile() async {
+    setState(() => _isLoading = true);
+
+    try {
+      String? userId = await AuthService.getUserId();
+      if (userId == null) throw Exception("User ID not found");
+
+      final userResponse = await ApiService.getRequest(
+        module: 'user',
+        endpoint: 'user/$userId',
+      );
+
+      final vehicleResponse = await ApiService.getRequest(
+        module: 'cars',
+        endpoint: 'users/$userId/cars',
+      );
+
+      List<Map<String, String>> vehiclesList = [];
+
+      if (vehicleResponse is Map<String, dynamic> &&
+          vehicleResponse.containsKey('cars') &&
+          vehicleResponse['cars'] is List) {
+        vehiclesList = List<Map<String, String>>.from(
+          vehicleResponse['cars'].map((car) => {
+                'model': car['car_model']?.toString() ?? '',
+                'license': car['license_number']?.toString() ?? '',
+                'car_id': car['car_id']?.toString() ?? '',
+              }),
+        );
+      }
+
+      setState(() {
+        _nameController.text = userResponse['name']?.toString() ?? '';
+        _emailController.text = userResponse['email']?.toString() ?? '';
+        _phoneController.text = userResponse['phone']?.toString() ?? '';
+        _collegeNameController.text =
+            userResponse['college_name']?.toString() ?? '';
+        _collegeIdController.text = userResponse['ruid']?.toString() ?? '';
+        _vehicles = vehiclesList;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to load profile: ${e.toString()}")),
+        );
+      });
+    }
+  }
+
+  /// **Update Profile**
+  Future<void> _updateProfile() async {
+    setState(() => _isLoading = true);
+
+    try {
+      String? userId = await AuthService.getUserId();
+      if (userId == null) throw Exception("User ID not found");
+
+      final body = {
+        "email": _emailController.text,
+        "phone": _phoneController.text,
+        "college_name": _collegeNameController.text,
+        "ruid": _collegeIdController.text,
+      };
+
+      await ApiService.putRequest(
+        module: 'user',
+        endpoint: 'user/$userId',
+        body: body,
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Profile Updated Successfully!")),
+      );
+
+      Navigator.pop(context);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to update profile: ${e.toString()}")),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  /// **Pick Profile Image**
   Future<void> _pickProfileImage() async {
     final picker = ImagePicker();
     final pickedImage = await picker.pickImage(source: ImageSource.gallery);
@@ -59,8 +135,8 @@ class EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
-  // 🚗 Pick Vehicle License Image and Extract Text (OCR)
-  Future<void> _pickAndScanLicense() async {
+  /// **License Plate Scanner**
+  Future<void> _scanLicensePlate() async {
     final picker = ImagePicker();
     final pickedImage = await picker.pickImage(source: ImageSource.camera);
 
@@ -71,8 +147,7 @@ class EditProfileScreenState extends State<EditProfileScreen> {
           await textRecognizer.processImage(inputImage);
 
       setState(() {
-        _licenseImage = File(pickedImage.path);
-        _licenseNumberController.text =
+        _licensePlateController.text =
             _extractLicenseNumber(recognizedText.text);
       });
 
@@ -80,7 +155,7 @@ class EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
-  // 🔍 Extract License Number from OCR Output
+  /// **Extract License Number from OCR Output**
   String _extractLicenseNumber(String text) {
     RegExp regExp =
         RegExp(r'[A-Z0-9]{6,10}'); // Basic pattern for license numbers
@@ -88,63 +163,101 @@ class EditProfileScreenState extends State<EditProfileScreen> {
     return matches.isNotEmpty ? matches.first.group(0) ?? '' : '';
   }
 
-  // ✅ Validate License Before Adding
-  bool _isLicenseValid(String license) {
-    return RegExp(r'^[A-Z0-9]{6,10}$').hasMatch(license);
-  }
+  Future<void> _addOrUpdateVehicle() async {
+    String? userId = await AuthService.getUserId();
+    if (userId == null) return;
 
-  void _addOrEditVehicle() {
-    if (_vehicleModelController.text.isNotEmpty &&
-        _licensePlateController.text.isNotEmpty &&
-        _licenseNumberController.text.isNotEmpty) {
-      if (!_isLicenseValid(_licenseNumberController.text)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Invalid License Number Format!')),
+    final Map<String, dynamic> carData = {
+      "car_model": _vehicleModelController.text.trim(),
+      "license_number": _licensePlateController.text.trim(),
+    };
+
+    try {
+      if (_editingIndex != null) {
+        // Update existing vehicle
+        String carId = _vehicles[_editingIndex!]['car_id']!;
+        await ApiService.putRequest(
+          module: 'cars',
+          endpoint: 'users/$userId/cars/$carId',
+          body: carData,
         );
-        return;
+
+        // 🔹 Update local list before fetching API data
+        setState(() {
+          _vehicles[_editingIndex!] = {
+            "model": carData["car_model"],
+            "license": carData["license_number"],
+            "car_id": carId
+          };
+        });
+      } else {
+        // Add new vehicle
+        final newVehicle = await ApiService.postRequest(
+          module: 'cars',
+          endpoint: 'users/$userId/cars',
+          body: carData,
+        );
+
+        // 🔹 Update the UI immediately by adding the new vehicle
+        setState(() {
+          _vehicles.add({
+            "model": carData["car_model"],
+            "license": carData["license_number"],
+            "car_id": newVehicle["car_id"] ?? "",
+          });
+        });
       }
 
-      setState(() {
-        if (_editingIndex != null) {
-          _vehicles[_editingIndex!] = {
-            'model': _vehicleModelController.text,
-            'license': _licensePlateController.text,
-            'license_number': _licenseNumberController.text,
-          };
-        } else {
-          _vehicles.add({
-            'model': _vehicleModelController.text,
-            'license': _licensePlateController.text,
-            'license_number': _licenseNumberController.text,
-          });
-        }
-        _vehicleModelController.clear();
-        _licensePlateController.clear();
-        _licenseNumberController.clear();
-        _editingIndex = null;
-      });
-    } else {
+      // 🔹 Reset form fields & editing index
+      _vehicleModelController.clear();
+      _licensePlateController.clear();
+      _editingIndex = null;
+
+      // 🔹 Refresh user profile after update
+      await _fetchUserProfile();
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all vehicle details')),
+        const SnackBar(content: Text("Vehicle saved successfully!")),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to save vehicle: ${e.toString()}")),
       );
     }
   }
 
-  void _editVehicle(int index) {
-    setState(() {
-      _vehicleModelController.text = _vehicles[index]['model']!;
-      _licensePlateController.text = _vehicles[index]['license']!;
-      _licenseNumberController.text = _vehicles[index]['license_number']!;
-      _editingIndex = index;
-    });
+  /// **Delete Vehicle**
+  Future<void> _deleteVehicle(int index) async {
+    try {
+      String? userId = await AuthService.getUserId();
+      if (userId == null) throw Exception("User ID not found");
+
+      final carId = _vehicles[index]['car_id']; // Get the car ID
+
+      if (carId == null || carId.isEmpty) {
+        throw Exception("Invalid car ID");
+      }
+
+      await ApiService.deleteRequest(
+        module: 'cars',
+        endpoint: 'users/$userId/cars/$carId',
+      );
+
+      setState(() {
+        _vehicles.removeAt(index);
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Vehicle Deleted Successfully!")),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to delete vehicle: ${e.toString()}")),
+      );
+    }
   }
 
-  void _deleteVehicle(int index) {
-    setState(() {
-      _vehicles.removeAt(index);
-    });
-  }
-
+  /// **Build UI**
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -154,129 +267,145 @@ class EditProfileScreenState extends State<EditProfileScreen> {
         centerTitle: true,
         actions: [
           TextButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Profile Updated')),
-              );
-              Navigator.pop(context);
-            },
+            onPressed: _isLoading ? null : _updateProfile,
             child: const Text('Save', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Profile Image
-            Center(
-              child: Stack(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundImage: _profileImage != null
-                        ? FileImage(_profileImage!)
-                        : null,
-                    child: _profileImage == null
-                        ? Icon(Icons.person, size: 50, color: Colors.grey[400])
-                        : null,
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: InkWell(
-                      onTap: _pickProfileImage,
-                      child: const CircleAvatar(
-                        backgroundColor: Colors.brown,
-                        radius: 18,
-                        child: Icon(Icons.camera_alt,
-                            color: Colors.white, size: 20),
-                      ),
+                  _buildProfileImagePicker(),
+                  Text(
+                    'Personal details',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
+                  _buildEditableField('Full Name', _nameController),
+                  _buildEditableField('Email', _emailController),
+                  Text(
+                    'College details',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  _buildEditableField('College Name', _collegeNameController),
+                  _buildEditableField('College ID', _collegeIdController),
+                  Text(
+                    'Vehicle details',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  _buildEditableField('Vehicle Model', _vehicleModelController),
+                  _buildEditableField('License Plate', _licensePlateController),
+                  ElevatedButton(
+                    onPressed: _addOrUpdateVehicle,
+                    child: Text(_editingIndex != null
+                        ? 'Update Vehicle'
+                        : 'Add Vehicle'),
+                  ),
+                  SizedBox(
+                    height: 10,
+                  ),
+                  _buildVehicleList(),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+    );
+  }
 
-            // Personal & College Details
-            _buildSectionCard('Personal Details', [
-              _buildEditableField('Full Name', _nameController),
-              _buildEditableField('Email Address', _emailController),
-              _buildEditableField('Phone Number', _phoneController),
-            ]),
-
-            _buildSectionCard('College Details', [
-              _buildEditableField('College Name', _collegeNameController),
-              _buildEditableField(
-                  'College Email ID', _collegeEmailIdController),
-              _buildEditableField('College ID', _collegeIdController),
-            ]),
-
-            // Vehicle Details
-            _buildSectionCard('Vehicle Details', [
-              ..._vehicles
-                  .asMap()
-                  .entries
-                  .map((entry) => _buildVehicleRow(entry.key, entry.value)),
-              const Divider(),
-              _buildEditableField('Vehicle Model', _vehicleModelController),
-              _buildEditableField('License Plate', _licensePlateController),
-              _buildEditableField('License Number', _licenseNumberController),
-              const SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: _pickAndScanLicense,
-                child: const Text('Scan License'),
-              ),
-              const SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: _addOrEditVehicle,
-                child: Text(
-                    _editingIndex != null ? 'Update Vehicle' : 'Add Vehicle'),
-              ),
-            ]),
-          ],
+  Widget _buildVehicleList() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "Vehicles List",
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
+        const SizedBox(height: 8),
+        _vehicles.isEmpty
+            ? const Text("No vehicles added",
+                style: TextStyle(color: Colors.grey))
+            : Column(
+                children: _vehicles.map((vehicle) {
+                  return Card(
+                    elevation: 3,
+                    margin: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: ListTile(
+                      leading: const Icon(Icons.directions_car,
+                          color: Colors.blueAccent),
+                      title: Text(vehicle['model'] ?? 'Unknown Model'),
+                      subtitle:
+                          Text('License Plate: ${vehicle['license'] ?? 'N/A'}'),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit, color: Colors.green),
+                            onPressed: () {
+                              setState(() {
+                                _vehicleModelController.text =
+                                    vehicle['model'] ?? '';
+                                _licensePlateController.text =
+                                    vehicle['license'] ?? '';
+                                _editingIndex = _vehicles.indexOf(vehicle);
+                              });
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () =>
+                                _deleteVehicle(_vehicles.indexOf(vehicle)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+        const SizedBox(height: 10),
+      ],
+    );
+  }
+
+  /// **Profile Image Picker**
+  Widget _buildProfileImagePicker() {
+    return GestureDetector(
+      onTap: _pickProfileImage,
+      child: CircleAvatar(
+        radius: 50,
+        backgroundImage: _profileImage != null
+            ? FileImage(_profileImage!)
+            : (_profileImageUrl != null && _profileImageUrl!.isNotEmpty)
+                ? NetworkImage(_profileImageUrl!) as ImageProvider
+                : null,
+        child: (_profileImage == null &&
+                (_profileImageUrl == null || _profileImageUrl!.isEmpty))
+            ? const Icon(Icons.camera_alt, size: 50, color: Colors.grey)
+            : null,
       ),
     );
   }
+}
 
-  Widget _buildEditableField(String label, TextEditingController controller) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: TextField(
-          controller: controller,
-          decoration: InputDecoration(labelText: label)),
-    );
-  }
-
-  Widget _buildSectionCard(String title, List<Widget> children) {
-    return Card(
-        child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child:
-                Column(children: [Text(title), const Divider(), ...children])));
-  }
-
-  Widget _buildVehicleRow(int index, Map<String, String> vehicle) {
-    return ListTile(
-      title: Text(vehicle['model'] ?? 'Unknown Model'),
-      subtitle: Text('License Plate: ${vehicle['license'] ?? 'N/A'}\n'
-          'License Number: ${vehicle['license_number'] ?? 'N/A'}'),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.edit, color: Colors.brown),
-            onPressed: () => _editVehicle(index),
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete, color: Colors.red),
-            onPressed: () => _deleteVehicle(index),
-          ),
-        ],
+Widget _buildEditableField(String label, TextEditingController controller) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 8.0),
+    child: TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(),
       ),
-    );
-  }
+    ),
+  );
 }

@@ -1,7 +1,106 @@
 import 'package:flutter/material.dart';
+import 'package:campus_connect/services/api_service.dart';
+import 'package:campus_connect/services/auth_service.dart';
 
-class ViewProfileScreen extends StatelessWidget {
+class ViewProfileScreen extends StatefulWidget {
   const ViewProfileScreen({super.key});
+
+  @override
+  ViewProfileScreenState createState() => ViewProfileScreenState();
+}
+
+class ViewProfileScreenState extends State<ViewProfileScreen> {
+  Map<String, dynamic>? userData;
+  List<Map<String, dynamic>> vehicles = [];
+  bool isLoading = true;
+  String? errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserData();
+  }
+
+  Future<void> _fetchUserData() async {
+    try {
+      String? userId = await AuthService.getUserId();
+      if (userId == null) {
+        if (mounted) {
+          setState(() {
+            errorMessage = "User ID not found";
+            isLoading = false;
+          });
+        }
+        return;
+      }
+
+      // 🔹 Fetch user profile
+      final userResponse = await ApiService.getRequest(
+        module: 'user',
+        endpoint: 'user/$userId',
+      );
+
+      print("User Profile API Response: $userResponse");
+
+      if (userResponse is! Map<String, dynamic>) {
+        throw Exception("Invalid user response format");
+      }
+
+      // 🔹 Fetch vehicle details
+      final vehicleResponse = await ApiService.getRequest(
+        module: 'cars',
+        endpoint: 'users/$userId/cars',
+      );
+
+      print("🔍 Vehicle API Response: $vehicleResponse");
+
+      List<Map<String, dynamic>> vehiclesList = [];
+
+      if (vehicleResponse is Map<String, dynamic>) {
+        if (vehicleResponse.containsKey('cars') &&
+            vehicleResponse['cars'] is List) {
+          List<dynamic> vehicleData = vehicleResponse['cars'];
+
+          for (var item in vehicleData) {
+            if (item is Map<String, dynamic>) {
+              vehiclesList.add({
+                'car_model': item['car_model'] ?? "N/A",
+                'license_number': item['license_number'] ?? "N/A",
+                'car_id': item['car_id'] ?? "N/A",
+              });
+            }
+          }
+        } else {
+          print("No 'cars' key found or incorrect format.");
+        }
+      } else {
+        print("Unexpected API response format.");
+      }
+
+      if (mounted) {
+        setState(() {
+          userData = userResponse;
+          vehicles = vehiclesList;
+          isLoading = false;
+        });
+      }
+
+      // ✅ Debugging: Print fetched vehicles
+      print("Vehicles List:");
+      for (var vehicle in vehicles) {
+        print(
+            "   - Model: ${vehicle['car_model']} | License: ${vehicle['license_number']}");
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          errorMessage = "Failed to load profile: ${e.toString()}";
+          isLoading = false;
+        });
+      }
+      print("Error in _fetchUserData: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -12,212 +111,119 @@ class ViewProfileScreen extends StatelessWidget {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: Icon(
-              Icons.edit,
-              color: Colors.white,
-            ),
-            onPressed: () {
-              Navigator.pushNamed(context, '/edit_profile');
+            icon: const Icon(Icons.edit, color: Colors.white),
+            onPressed: () async {
+              await Navigator.pushNamed(context, '/edit_profile');
+              _fetchUserData(); // Refresh profile data after editing
             },
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Profile Header
-            Center(
-              child: Column(
-                children: [
-                  const CircleAvatar(
-                    radius: 50,
-                    child: Icon(
-                      Icons.person,
-                      size: 50,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'User Name',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    'username@gmail.com',
-                    style: TextStyle(color: Colors.grey[600]),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Divider(),
-            const SizedBox(height: 10),
-
-            // Personal Details Section
-            _buildPersonalDetailsCard(
-              fullName: 'John Doe',
-              email: 'johndoe@example.com',
-              phone: '123-456-7890',
-            ),
-            const Divider(),
-
-            // College Details Section
-            _buildCollegeDetailsCard(
-              collegeName: 'Rutgers University',
-              collegeId: 'RU01234',
-              collegeMail: 'name@college.edu',
-            ),
-            const Divider(),
-
-            // Vehicle Details Section
-            const Text(
-              'Vehicle Details',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            _buildVehicleDetailsCard(
-              vehicleName: 'Toyota Corolla',
-              licensePlate: 'License Plate: XYZ123',
-            ),
-            const SizedBox(height: 10),
-            _buildVehicleDetailsCard(
-              vehicleName: 'Honda Accord',
-              licensePlate: 'License Plate: ABC456',
-            ),
-          ],
-        ),
+      body: RefreshIndicator(
+        onRefresh: _fetchUserData,
+        child: isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : errorMessage != null
+                ? Center(
+                    child: Text(errorMessage!,
+                        style: const TextStyle(color: Colors.red)))
+                : _buildProfileContent(),
       ),
     );
   }
 
-  Widget _buildPersonalDetailsCard({
-    required String fullName,
-    required String email,
-    required String phone,
-  }) {
-    return SizedBox(
-      width: double.infinity,
-      child: Card(
-        elevation: 3,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Personal Details",
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const Divider(),
-              _buildDetailRow(
-                icon: Icons.person,
-                label: 'Full Name',
-                value: fullName,
-              ),
-              _buildDetailRow(
-                icon: Icons.email,
-                label: 'Email Address',
-                value: email,
-              ),
-              _buildDetailRow(
-                icon: Icons.phone,
-                label: 'Phone Number',
-                value: phone,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  Widget _buildProfileContent() {
+    if (userData == null) return const SizedBox.shrink();
 
-  Widget _buildDetailRow({
-    required IconData icon,
-    required String label,
-    required String value,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Icon(icon, color: Colors.brown),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  value,
-                  style: const TextStyle(fontSize: 14),
-                ),
-              ],
-            ),
+          CircleAvatar(
+            radius: 50,
+            backgroundImage: userData!['photo']?.isNotEmpty == true
+                ? NetworkImage(userData!['photo']) as ImageProvider
+                : null,
+            child: userData!['photo']?.isEmpty != false
+                ? const Icon(Icons.person, size: 50, color: Colors.grey)
+                : null,
           ),
+          const SizedBox(height: 10),
+          _buildPersonalDetailsCard(),
+          const SizedBox(height: 16),
+          _buildCollegeDetailsCard(),
+          const SizedBox(height: 16),
+          _buildVehicleDetailsSection(),
         ],
       ),
     );
   }
 
-  Widget _buildCollegeDetailsCard({
-    required String collegeName,
-    required String collegeId,
-    required String collegeMail,
-  }) {
-    return SizedBox(
-      width: double.infinity,
-      child: Card(
-        elevation: 3,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
+  Widget _buildPersonalDetailsCard() {
+    return _buildDetailCard(
+      title: "Personal Details",
+      details: [
+        _buildDetailRow(
+            Icons.person, 'Full Name', userData!['user_name'] ?? "N/A"),
+        _buildDetailRow(
+            Icons.email, 'Email Address', userData!['email'] ?? "N/A"),
+        _buildDetailRow(
+            Icons.phone, 'Phone Number', userData!['phone'] ?? "N/A"),
+      ],
+    );
+  }
+
+  Widget _buildCollegeDetailsCard() {
+    return _buildDetailCard(
+      title: "College Details",
+      details: [
+        _buildDetailRow(
+            Icons.school, 'College Name', userData!['college_name'] ?? "N/A"),
+        _buildDetailRow(Icons.badge, 'College ID', userData!['ruid'] ?? "N/A"),
+      ],
+    );
+  }
+
+  Widget _buildVehicleDetailsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Vehicle Details',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "College Details",
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+        const SizedBox(height: 10),
+        vehicles.isEmpty
+            ? _buildEmptyVehicleCard()
+            : ListView.builder(
+                physics: const NeverScrollableScrollPhysics(),
+                shrinkWrap: true,
+                itemCount: vehicles.length,
+                itemBuilder: (context, index) {
+                  final vehicle = vehicles[index];
+                  return _buildVehicleDetailsCard(
+                    vehicleName: vehicle['car_model']!,
+                    licensePlate: vehicle['license_number']!,
+                    carId: vehicle['car_id']!,
+                  );
+                },
               ),
-              const Divider(),
-              _buildDetailRow(
-                  icon: Icons.school,
-                  label: 'College Name',
-                  value: collegeName),
-              _buildDetailRow(
-                icon: Icons.badge,
-                label: 'College ID',
-                value: collegeId,
-              ),
-              _buildDetailRow(
-                icon: Icons.email,
-                label: 'College Mail',
-                value: collegeMail,
-              ),
-            ],
-          ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyVehicleCard() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          children: const [
+            Icon(Icons.directions_car_outlined, color: Colors.grey),
+            SizedBox(width: 8),
+            Text("No vehicles registered"),
+          ],
         ),
       ),
     );
@@ -226,37 +232,54 @@ class ViewProfileScreen extends StatelessWidget {
   Widget _buildVehicleDetailsCard({
     required String vehicleName,
     required String licensePlate,
+    required String carId,
   }) {
-    return SizedBox(
-      width: double.infinity,
-      child: Card(
-        elevation: 3,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                vehicleName,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                licensePlate,
-                style: const TextStyle(
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
+    return Card(
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildDetailRow(Icons.directions_car, 'Model', vehicleName),
+            _buildDetailRow(
+                Icons.confirmation_number, 'License Plate', licensePlate),
+          ],
         ),
       ),
     );
   }
+
+  Widget _buildDetailRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.brown),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text("$label: $value", style: const TextStyle(fontSize: 14)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+Widget _buildDetailCard(
+    {required String title, required List<Widget> details}) {
+  return Card(
+    elevation: 3,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    child: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(children: [
+        Text(title,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        const Divider(),
+        ...details
+      ]),
+    ),
+  );
 }

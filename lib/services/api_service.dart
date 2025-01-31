@@ -1,48 +1,118 @@
 import 'dart:convert';
 import 'package:campus_connect/config/api_config.dart';
+import 'package:campus_connect/services/auth_service.dart';
 import 'package:http/http.dart' as http;
 
 class ApiService {
+  /// Select the correct base URL based on the `module`
+  static String _getBaseUrl(String module) {
+    switch (module) {
+      case 'auth':
+        return ApiConfig.authBaseUrl;
+      case 'user':
+        return ApiConfig.userBaseUrl;
+      case 'cars':
+        return ApiConfig.carsBaseUrl;
+      default:
+        throw Exception("Invalid API module: $module");
+    }
+  }
+
+  /// POST Request
   static Future<Map<String, dynamic>> postRequest(
-      String endpoint, Map<String, dynamic> body) async {
-    final Uri url = Uri.parse("${ApiConfig.authBaseUrl}/$endpoint");
+      {required String module,
+      required String endpoint,
+      required Map<String, dynamic> body}) async {
+    final String baseUrl = _getBaseUrl(module);
+    final Uri url = Uri.parse("$baseUrl$endpoint");
 
     try {
       final response = await http.post(
         url,
-        headers: {"Content-Type": "application/json"},
+        headers: await _getHeaders(), // Include auth token
         body: jsonEncode(body),
       );
 
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      } else {
-        throw Exception(
-          "Error: ${jsonDecode(response.body)['message'] ?? response.body}",
-        );
-      }
+      return _handleResponse(response);
     } catch (e) {
       throw Exception("Failed to connect to server: $e");
     }
   }
 
-  static Future<Map<String, dynamic>> getRequest(String endpoint,
-      {Map<String, String>? headers}) async {
-    final Uri url = Uri.parse("${ApiConfig.authBaseUrl}$endpoint");
+  /// GET Request
+  static Future<Map<String, dynamic>> getRequest(
+      {required String module, required String endpoint}) async {
+    final String baseUrl = _getBaseUrl(module);
+    final Uri url = Uri.parse("$baseUrl$endpoint");
 
     try {
       final response = await http.get(
         url,
-        headers: headers ?? {"Content-Type": "application/json"},
+        headers: await _getHeaders(),
       );
 
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      } else {
-        throw Exception("Error: ${response.body}");
-      }
+      return _handleResponse(response);
     } catch (e) {
       throw Exception("Failed to connect to server: $e");
+    }
+  }
+
+  static Future<Map<String, dynamic>> putRequest({
+    required String module,
+    required String endpoint,
+    required Map<String, dynamic> body,
+  }) async {
+    final String baseUrl = _getBaseUrl(module);
+    final Uri url = Uri.parse("$baseUrl$endpoint");
+
+    try {
+      final response = await http.put(
+        url,
+        headers: await _getHeaders(),
+        body: jsonEncode(body),
+      );
+
+      return _handleResponse(response);
+    } catch (e) {
+      throw Exception("Failed to connect to server: $e");
+    }
+  }
+
+  /// DELETE Request
+  static Future<Map<String, dynamic>> deleteRequest(
+      {required String module, required String endpoint}) async {
+    final String baseUrl = _getBaseUrl(module);
+    final Uri url = Uri.parse("$baseUrl$endpoint");
+
+    try {
+      final response = await http.delete(
+        url,
+        headers: await _getHeaders(),
+      );
+
+      return _handleResponse(response);
+    } catch (e) {
+      throw Exception("Failed to connect to server: $e");
+    }
+  }
+
+  /// Get headers (Includes Authorization if token is available)
+  static Future<Map<String, String>> _getHeaders() async {
+    String? token = await AuthService.getToken(); // Get token if available
+    return {
+      "Content-Type": "application/json",
+      if (token != null)
+        "Authorization": "Bearer $token", // Include token if present
+    };
+  }
+
+  /// 🔹 **Handle API Responses**
+  static Map<String, dynamic> _handleResponse(http.Response response) {
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception(
+          "Error: ${jsonDecode(response.body)['message'] ?? response.body}");
     }
   }
 }
