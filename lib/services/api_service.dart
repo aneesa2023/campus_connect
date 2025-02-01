@@ -13,6 +13,8 @@ class ApiService {
         return ApiConfig.userBaseUrl;
       case 'cars':
         return ApiConfig.carsBaseUrl;
+      case 'post_ride':
+        return ApiConfig.postRideBaseUrl;
       default:
         throw Exception("Invalid API module: $module");
     }
@@ -106,7 +108,7 @@ class ApiService {
     };
   }
 
-  /// 🔹 **Handle API Responses**
+  /// Handle API Responses
   static Map<String, dynamic> _handleResponse(http.Response response) {
     if (response.statusCode == 200 || response.statusCode == 201) {
       return jsonDecode(response.body);

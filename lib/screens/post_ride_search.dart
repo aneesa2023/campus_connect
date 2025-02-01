@@ -4,7 +4,9 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'location_search_screen.dart';
+import 'post_ride_details.dart';
 
 class PostRideLocationScreen extends StatefulWidget {
   const PostRideLocationScreen({super.key});
@@ -17,6 +19,7 @@ class PostRideLocationScreenState extends State<PostRideLocationScreen> {
   final TextEditingController _fromController = TextEditingController();
   final TextEditingController _toController = TextEditingController();
   String? _selectedDateTime;
+  DateTime? _departureDateTime;
 
   LatLng? _fromLocation;
   LatLng? _toLocation;
@@ -55,13 +58,14 @@ class PostRideLocationScreenState extends State<PostRideLocationScreen> {
       final lng = result['lng'];
 
       if (lat != null && lng != null) {
-        if (isFrom) {
-          _fromLocation = LatLng(lat, lng);
-        } else {
-          _toLocation = LatLng(lat, lng);
-        }
+        setState(() {
+          if (isFrom) {
+            _fromLocation = LatLng(lat, lng);
+          } else {
+            _toLocation = LatLng(lat, lng);
+          }
+        });
       }
-      setState(() {});
     }
   }
 
@@ -89,8 +93,7 @@ class PostRideLocationScreenState extends State<PostRideLocationScreen> {
           );
 
           LatLngBounds bounds = _getBoundsForPolyline(decodedPoints);
-          _mapController
-              .animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
+          _mapController.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
 
           _isRouteFetched = true;
         });
@@ -147,6 +150,30 @@ class PostRideLocationScreenState extends State<PostRideLocationScreen> {
     return points;
   }
 
+  void _navigateToPostRideDetails() {
+    if (_fromLocation == null || _toLocation == null || _departureDateTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please select locations and departure time")),
+      );
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PostRideDetails(
+          fromLocation: _fromController.text,
+          fromLat: _fromLocation!.latitude,
+          fromLong: _fromLocation!.longitude,
+          toLocation: _toController.text,
+          toLat: _toLocation!.latitude,
+          toLong: _toLocation!.longitude,
+          departureTime: _departureDateTime!.toIso8601String(),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -162,32 +189,26 @@ class PostRideLocationScreenState extends State<PostRideLocationScreen> {
             child: Column(
               children: [
                 GestureDetector(
-                  onTap: () => _navigateToSearch(
-                      "Select From Location", _fromController, true),
+                  onTap: () => _navigateToSearch("Select From Location", _fromController, true),
                   child: TextField(
                     controller: _fromController,
                     enabled: false,
                     decoration: InputDecoration(
                       labelText: "From",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       suffixIcon: const Icon(Icons.location_on),
                     ),
                   ),
                 ),
                 const SizedBox(height: 10),
                 GestureDetector(
-                  onTap: () => _navigateToSearch(
-                      "Select To Location", _toController, false),
+                  onTap: () => _navigateToSearch("Select To Location", _toController, false),
                   child: TextField(
                     controller: _toController,
                     enabled: false,
                     decoration: InputDecoration(
                       labelText: "To",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       suffixIcon: const Icon(Icons.location_on),
                     ),
                   ),
@@ -202,8 +223,8 @@ class PostRideLocationScreenState extends State<PostRideLocationScreen> {
                       maxTime: DateTime(2025, 12, 31),
                       onConfirm: (date) {
                         setState(() {
-                          _selectedDateTime =
-                              "${date.month}-${date.day}-${date.year} ${date.hour}:${date.minute}";
+                          _selectedDateTime = DateFormat('yyyy-MM-dd HH:mm').format(date);
+                          _departureDateTime = date;
                         });
                       },
                       currentTime: DateTime.now(),
@@ -213,46 +234,27 @@ class PostRideLocationScreenState extends State<PostRideLocationScreen> {
                     enabled: false,
                     decoration: InputDecoration(
                       labelText: _selectedDateTime ?? "Select Date & Time",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      suffixIcon: const Icon(
-                        Icons.calendar_today,
-                      ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      suffixIcon: const Icon(Icons.calendar_today),
                     ),
                   ),
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: _isRouteFetched
-                      ? () {
-                          Navigator.pushNamed(context, '/postRideDetails');
-                        }
-                      : _fetchRoute,
+                  onPressed: _isRouteFetched ? _navigateToPostRideDetails : _fetchRoute,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.brown,
                     minimumSize: const Size(double.infinity, 50),
                   ),
-                  child: Text(
-                    _isRouteFetched ? "Post Ride" : "Get Route",
-                    style: const TextStyle(
-                      color: Colors.white,
-                    ),
-                  ),
+                  child: Text(_isRouteFetched ? "Post Ride" : "Get Route", style: const TextStyle(color: Colors.white)),
                 ),
               ],
             ),
           ),
           Expanded(
             child: GoogleMap(
-              initialCameraPosition: const CameraPosition(
-                target: LatLng(
-                    40.500618, -74.447449), // Rutgers University, New Brunswick
-                zoom: 15,
-              ),
-              onMapCreated: (controller) {
-                _mapController = controller;
-              },
+              initialCameraPosition: const CameraPosition(target: LatLng(40.500618, -74.447449), zoom: 15),
+              onMapCreated: (controller) => _mapController = controller,
               markers: _markers,
               polylines: _routePolyline != null ? {_routePolyline!} : {},
             ),

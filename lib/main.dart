@@ -57,7 +57,15 @@ class MyApp extends StatelessWidget {
         '/my_trips': (context) => MyTripsScreen(),
         '/searchRide': (context) => RideSearchScreen(),
         '/postRide': (context) => PostRideLocationScreen(),
-        '/postRideDetails': (context) => PostRideDetails(),
+        '/postRideDetails': (context) => PostRideDetails(
+              fromLocation: '',
+              fromLat: 0,
+              fromLong: 0,
+              toLocation: '',
+              toLat: 0,
+              toLong: 0,
+              departureTime: '',
+            ),
         '/registerDriver': (context) => RegisterDriverScreen(),
       },
     );

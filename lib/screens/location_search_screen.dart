@@ -117,7 +117,7 @@ class LocationSearchScreenState extends State<LocationSearchScreen> {
     try {
       final currentLocation = await location.getLocation();
       final currentLatLng =
-      LatLng(currentLocation.latitude!, currentLocation.longitude!);
+          LatLng(currentLocation.latitude!, currentLocation.longitude!);
 
       if (mounted) {
         setState(() {
