@@ -167,7 +167,7 @@ class PostRideDetailsState extends State<PostRideDetails> {
         "air_conditioning": _selectedOptions['air_conditioning'].toString(),
         "wheelchair_access": _selectedOptions['wheelchair_access'].toString(),
         "note": _noteToRidersController.text,
-        "status": "scheduled",
+        "ride_status": "scheduled",
         "created_at": DateTime.now().toIso8601String(),
       };
 

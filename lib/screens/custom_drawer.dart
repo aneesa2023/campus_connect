@@ -1,7 +1,56 @@
 import 'package:flutter/material.dart';
+import 'package:campus_connect/services/api_service.dart';
+import 'package:campus_connect/services/auth_service.dart';
 
-class CustomDrawer extends StatelessWidget {
+class CustomDrawer extends StatefulWidget {
   const CustomDrawer({super.key});
+
+  @override
+  CustomDrawerState createState() => CustomDrawerState();
+}
+
+class CustomDrawerState extends State<CustomDrawer> {
+  String? userId;
+  String? userName;
+  String? userEmail;
+  bool isDriver = false;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserProfile();
+  }
+
+  /// Fetch User Profile Data**
+  Future<void> _fetchUserProfile() async {
+    try {
+      String? fetchedUserId = await AuthService.getUserId();
+      if (fetchedUserId == null) throw Exception("User ID not found");
+
+      final userProfile = await ApiService.getRequest(
+        module: 'user',
+        endpoint: 'user/$fetchedUserId',
+      );
+
+      setState(() {
+        userId = userProfile['user_id'] ?? "N/A";
+        userName = userProfile['user_name'] ?? "N/A";
+        userEmail = userProfile['email'] ?? "N/A";
+        isDriver = userProfile['is_driver'] ?? false;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        userId = "N/A";
+        userName = "";
+        userEmail = "";
+        isDriver = false;
+        isLoading = false;
+      });
+      print("Error fetching user profile: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -10,20 +59,22 @@ class CustomDrawer extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           UserAccountsDrawerHeader(
-            decoration: BoxDecoration(
-              color: Colors.white,
-            ),
-            accountName: Text(
-              'User Name',
-              style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold),
-            ),
-            accountEmail: Text(
-              'username@gmail.com',
-              style: TextStyle(color: Colors.black54),
-            ),
+            decoration: const BoxDecoration(color: Colors.white),
+            accountName: isLoading
+                ? const CircularProgressIndicator()
+                : Text(
+                    "Hello $userName",
+                    style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold),
+                  ),
+            accountEmail: isLoading
+                ? null
+                : Text(
+                    userEmail ?? " ",
+                    style: const TextStyle(color: Colors.black54),
+                  ),
           ),
           Expanded(
             child: ListView(
@@ -38,6 +89,14 @@ class CustomDrawer extends StatelessWidget {
                 _buildDrawerItem(Icons.directions_car, 'My Trips', () {
                   Navigator.pushNamed(context, '/my_trips');
                 }),
+
+                // Show "Posted Rides List" Only If User is a Driver
+                if (isDriver)
+                  _buildDrawerItem(Icons.list_alt_rounded, 'Posted Rides List',
+                      () {
+                    Navigator.pushNamed(context, '/postedRides');
+                  }),
+
                 _buildDrawerItem(Icons.info, 'About', () {
                   Navigator.pushNamed(context, '/about');
                 }),
@@ -64,7 +123,7 @@ class CustomDrawer extends StatelessWidget {
   Widget _buildDrawerItem(IconData icon, String title, VoidCallback onTap) {
     return ListTile(
       leading: Icon(icon, color: Colors.brown),
-      title: Text(title, style: TextStyle(fontSize: 16)),
+      title: Text(title, style: const TextStyle(fontSize: 16)),
       onTap: onTap,
     );
   }

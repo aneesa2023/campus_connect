@@ -12,6 +12,7 @@ import 'package:campus_connect/screens/notifications.dart';
 import 'package:campus_connect/screens/onboarding_screen.dart';
 import 'package:campus_connect/screens/post_ride_details.dart';
 import 'package:campus_connect/screens/post_ride_search.dart';
+import 'package:campus_connect/screens/posted_rides_list.dart';
 import 'package:campus_connect/screens/privacy_policy.dart';
 import 'package:campus_connect/screens/ride_search.dart';
 import 'package:campus_connect/screens/view_profile.dart';
@@ -67,6 +68,7 @@ class MyApp extends StatelessWidget {
               departureTime: '',
             ),
         '/registerDriver': (context) => RegisterDriverScreen(),
+        '/postedRides': (context) => PostedRidesList(),
       },
     );
   }
