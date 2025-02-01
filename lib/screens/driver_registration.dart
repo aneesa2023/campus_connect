@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart';
+import 'package:campus_connect/services/api_service.dart';
+import 'package:campus_connect/services/auth_service.dart';
 
 class RegisterDriverScreen extends StatefulWidget {
   const RegisterDriverScreen({super.key});
 
   @override
-  RegisterDriverScreenState createState() =>
-      RegisterDriverScreenState(); // Made class public
+  RegisterDriverScreenState createState() => RegisterDriverScreenState();
 }
 
 class RegisterDriverScreenState extends State<RegisterDriverScreen> {
@@ -19,6 +20,7 @@ class RegisterDriverScreenState extends State<RegisterDriverScreen> {
   final TextEditingController _expirationDateController =
       TextEditingController();
   bool _isDeclarationChecked = false;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -29,27 +31,58 @@ class RegisterDriverScreenState extends State<RegisterDriverScreen> {
     super.dispose();
   }
 
-  void _submitRegistration() {
+  Future<void> _submitRegistration() async {
     if (_licenseNumberController.text.isEmpty ||
         _issuingAuthorityController.text.isEmpty ||
         _expirationDateController.text.isEmpty ||
         !_isDeclarationChecked) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content:
-              Text("Please fill all the fields and accept the declaration."),
+          content: Text(
+            "Please fill all the fields and accept the declaration.",
+          ),
         ),
       );
       return;
     }
 
-    // Submit the driver registration details
-    Navigator.pop(context, {
-      'fullName': _fullNameController.text,
-      'licenseNumber': _licenseNumberController.text,
-      'issuingAuthority': _issuingAuthorityController.text,
-      'expirationDate': _expirationDateController.text,
-    });
+    setState(() => _isLoading = true);
+
+    try {
+      String? userId = await AuthService.getUserId();
+      if (userId == null) throw Exception("User ID not found");
+
+      final endpoint = "user/$userId";
+      final Map<String, dynamic> updateData = {
+        "is_driver": true,
+        // "full_name": _fullNameController.text.trim(),
+        // "license_number": _licenseNumberController.text.trim(),
+        // "issuing_authority": _issuingAuthorityController.text.trim(),
+        // "expiration_date": _expirationDateController.text.trim(),
+      };
+
+      await ApiService.putRequest(
+        module: "user",
+        endpoint: endpoint,
+        body: updateData,
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("You are now registered as a driver!"),
+        ),
+      );
+
+      Navigator.pop(context); // Close the screen after success
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Failed to register: ${e.toString()}"),
+        ),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -103,13 +136,12 @@ class RegisterDriverScreenState extends State<RegisterDriverScreen> {
                       showTitleActions: true,
                       minTime: DateTime.now(),
                       maxTime: DateTime.now().add(
-                        const Duration(days: 3650), // 10 years from now
+                        const Duration(days: 3650),
                       ),
                       onConfirm: (date) {
                         setState(() {
                           _expirationDateController.text =
-                              DateFormat('MM-dd-yyyy')
-                                  .format(date); // Format date here
+                              DateFormat('MM-dd-yyyy').format(date);
                         });
                       },
                       currentTime: DateTime.now(),
@@ -123,12 +155,12 @@ class RegisterDriverScreenState extends State<RegisterDriverScreen> {
                   showTitleActions: true,
                   minTime: DateTime.now(),
                   maxTime: DateTime.now().add(
-                    const Duration(days: 3650), // 10 years from now
+                    const Duration(days: 3650),
                   ),
                   onConfirm: (date) {
                     setState(() {
-                      _expirationDateController.text = DateFormat('MM-dd-yyyy')
-                          .format(date); // Format date here
+                      _expirationDateController.text =
+                          DateFormat('MM-dd-yyyy').format(date);
                     });
                   },
                   currentTime: DateTime.now(),
@@ -157,18 +189,20 @@ class RegisterDriverScreenState extends State<RegisterDriverScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _submitRegistration,
+                onPressed: _isLoading ? null : _submitRegistration,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.brown,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                child: const Text(
-                  "Register",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                  ),
-                ),
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text(
+                        "Register",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                        ),
+                      ),
               ),
             ),
           ],
