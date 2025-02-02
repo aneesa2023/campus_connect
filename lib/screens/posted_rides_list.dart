@@ -1,3 +1,4 @@
+import 'package:campus_connect/screens/view_ride_requests_list.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:campus_connect/services/api_service.dart';
@@ -448,6 +449,28 @@ class _PostedRidesListState extends State<PostedRidesList> {
                                       ),
                                     ),
                                   ),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            ViewRideRequestsList(
+                                          rideId: '${ride['ride_id']}',
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.brown,
+                                    minimumSize:
+                                        const Size(double.infinity, 40),
+                                  ),
+                                  child: const Text(
+                                    'View All Ride Requests',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ),
                               ],
                             ),
                           ),

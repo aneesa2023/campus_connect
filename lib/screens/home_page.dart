@@ -76,7 +76,94 @@ class HomePageState extends State<HomePage> {
       body: Center(
         child: isLoading
             ? const CircularProgressIndicator()
-            : Padding(
+            : ListView(padding: EdgeInsets.all(20), children: [
+                OutlinedButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/searchRide');
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.black,
+                    minimumSize: const Size(200, 50),
+                    side: const BorderSide(color: Colors.brown),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: const Text('Search for a Ride'),
+                ),
+                const SizedBox(height: 20),
+                OutlinedButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/my_trips');
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.black,
+                    minimumSize: const Size(200, 50),
+                    side: const BorderSide(color: Colors.brown),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: const Text('My Trips'),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'NOTE: You need to have a verified driving licence and Register as Driver to host Rides',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (isDriverRegistered == true) {
+                      Navigator.pushNamed(context, '/postRide');
+                    } else {
+                      final result =
+                          await Navigator.pushNamed(context, '/registerDriver');
+
+                      if (result != null) {
+                        _loadUserDetails();
+                      }
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: Colors.brown,
+                    minimumSize: const Size(200, 50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: const Text('Post a Ride'),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (isDriverRegistered == true) {
+                      Navigator.pushNamed(context, '/postedRides');
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            "Do not have any rides list yet",
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: Colors.brown,
+                    minimumSize: const Size(200, 50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: const Text('Posted Rides List'),
+                ),
+                const SizedBox(height: 20),
+              ]),
+        //TODO
+        /*Padding(
                 padding: EdgeInsets.all(12),
                 child: Column(
                   children: [
@@ -203,49 +290,7 @@ class HomePageState extends State<HomePage> {
                       ),
                     ),
                   ],
-                )),
-        /*   Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ElevatedButton(
-                    onPressed: () async {
-                      if (isDriverRegistered == true) {
-                        Navigator.pushNamed(context, '/postRide');
-                      } else {
-                        final result = await Navigator.pushNamed(
-                            context, '/registerDriver');
-
-                        if (result != null) {
-                          _loadUserDetails();
-                        }
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      backgroundColor: Colors.brown,
-                      minimumSize: const Size(200, 50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: const Text('Post a Ride'),
-                  ),
-                  const SizedBox(height: 20),
-                  OutlinedButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/searchRide');
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.black,
-                      minimumSize: const Size(200, 50),
-                      side: const BorderSide(color: Colors.brown),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: const Text('Search for a Ride'),
-                  ),
-                ],
+                ),
               ),*/
       ),
     );
