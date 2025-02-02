@@ -1,3 +1,3 @@
 class Constants {
-  static const String googleApiKey = 'AIzaSyDYcWPWWFCBxoe29GllyuPGwV3IXN0F750';
+  static const String googleApiKey = 'YOUR_GOOGLE_API_KEY';
 }
