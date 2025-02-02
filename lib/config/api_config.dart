@@ -13,4 +13,7 @@ class ApiConfig {
 
   static const String searchRideBaseUrl =
       "https://bt8kq7yrw8.execute-api.us-east-1.amazonaws.com/dev/";
+
+  static const String requeestRideBaseUrl =
+      "https://5cr63zxwr1.execute-api.us-east-1.amazonaws.com/dev/";
 }

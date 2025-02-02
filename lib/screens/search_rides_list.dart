@@ -1,4 +1,5 @@
 import 'package:campus_connect/services/api_service.dart';
+import 'package:campus_connect/services/auth_service.dart';
 import 'package:flutter/material.dart';
 
 class SearchedRidesList extends StatefulWidget {
@@ -29,14 +30,16 @@ class _SearchedRidesListState extends State<SearchedRidesList> {
   List<Map<String, dynamic>> _rides = [];
   bool _isLoading = true;
   String? _errorMessage;
+  String? riderUserId;
 
   @override
   void initState() {
     super.initState();
     _fetchSearchedRides();
+    _loadUserDetails();
   }
 
-  /// **Fetch available rides from API**
+  /// Fetch available rides from API
   Future<void> _fetchSearchedRides() async {
     setState(() {
       _isLoading = true;
@@ -75,6 +78,53 @@ class _SearchedRidesListState extends State<SearchedRidesList> {
         _errorMessage = "Error fetching rides: ${e.toString()}";
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _loadUserDetails() async {
+    String? storedUserId = await AuthService.getUserId();
+    if (storedUserId != null) {
+      riderUserId = storedUserId;
+    } else {
+      setState(() {
+        riderUserId = 'Unknown';
+      });
+    }
+  }
+
+  Future<void> _requestRide(String rideId) async {
+    try {
+      final requestPayload = {
+        "rider_id": riderUserId,
+        "ride_status": "pending"
+      };
+      _isLoading = true;
+      print("$rideId-----$riderUserId");
+      final response = await ApiService.postRequest(
+        module: 'request_ride',
+        endpoint: 'rides/$rideId/request',
+        body: requestPayload,
+      );
+
+      if (response.containsKey("message")) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response["message"]),
+            backgroundColor: Colors.green,
+          ),
+        );
+        setState(() {
+          _fetchSearchedRides();
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Failed to request ride: ${e.toString()}"),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -298,21 +348,23 @@ class _SearchedRidesListState extends State<SearchedRidesList> {
                                 Center(
                                   child: ElevatedButton(
                                     onPressed: () {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                          content:
-                                              Text("Pending Implementation"),
-                                        ),
-                                      );
+                                      _requestRide(ride['ride_status'])
+                                                  .toString() ==
+                                              "pending"
+                                          ? null
+                                          : _requestRide(ride['ride_id']);
                                     },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.brown,
                                       minimumSize:
                                           const Size(double.infinity, 40),
                                     ),
-                                    child: const Text(
-                                      'Request Ride',
+                                    child: Text(
+                                      _requestRide(ride['ride_status'])
+                                                  .toString() ==
+                                              "pending"
+                                          ? 'Requested Ride'
+                                          : 'Request Ride',
                                       style: TextStyle(color: Colors.white),
                                     ),
                                   ),

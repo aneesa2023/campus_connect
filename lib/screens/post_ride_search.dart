@@ -178,7 +178,7 @@ class PostRideLocationScreenState extends State<PostRideLocationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Post a Ride'),
+        title: const Text('Search Route'),
         backgroundColor: Colors.brown,
         centerTitle: true,
       ),

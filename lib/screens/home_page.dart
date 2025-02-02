@@ -1,6 +1,11 @@
 import 'package:campus_connect/screens/custom_drawer.dart';
 import 'package:campus_connect/services/auth_service.dart';
 import 'package:campus_connect/services/api_service.dart';
+import 'package:campus_connect/screens/upcoming_features/community_feed.dart';
+import 'package:campus_connect/screens/upcoming_features/find_roommates.dart';
+import 'package:campus_connect/screens/upcoming_features/moveout_sale.dart';
+import 'package:campus_connect/screens/upcoming_features/polls_screen.dart';
+import 'package:campus_connect/screens/upcoming_features/subleasing.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
@@ -71,7 +76,135 @@ class HomePageState extends State<HomePage> {
       body: Center(
         child: isLoading
             ? const CircularProgressIndicator()
-            : Column(
+            : Padding(
+                padding: EdgeInsets.all(12),
+                child: Column(
+                  children: [
+                    FeatureCard(
+                      title: "Rides",
+                      subtitle: "Post or search for rides",
+                      icon: Icons.directions_car_rounded,
+                      color: Colors.brown.shade600,
+                      onTap: () {
+                        showModalBottomSheet(
+                          context: context,
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.vertical(top: Radius.circular(20)),
+                          ),
+                          builder: (context) {
+                            return Padding(
+                              padding: EdgeInsets.all(60),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  ElevatedButton(
+                                    onPressed: () async {
+                                      if (isDriverRegistered == true) {
+                                        Navigator.pushNamed(
+                                            context, '/postRide');
+                                      } else {
+                                        final result =
+                                            await Navigator.pushNamed(
+                                                context, '/registerDriver');
+
+                                        if (result != null) {
+                                          _loadUserDetails();
+                                        }
+                                      }
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      foregroundColor: Colors.white,
+                                      backgroundColor: Colors.brown,
+                                      minimumSize: const Size(200, 50),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                    child: const Text('Post a Ride'),
+                                  ),
+                                  const SizedBox(height: 20),
+                                  OutlinedButton(
+                                    onPressed: () {
+                                      Navigator.pushNamed(
+                                          context, '/searchRide');
+                                    },
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: Colors.black,
+                                      minimumSize: const Size(200, 50),
+                                      side:
+                                          const BorderSide(color: Colors.brown),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                    child: const Text('Search for a Ride'),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                    FeatureCard(
+                      title: "Find Roommates",
+                      subtitle: "Search based on budget, gender, location",
+                      icon: Icons.people_alt_rounded,
+                      color: Colors.blue.shade600,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => FindRoommatesScreen()),
+                      ),
+                    ),
+                    FeatureCard(
+                      title: "Subleasing",
+                      subtitle: "Find available subleases and lease out",
+                      icon: Icons.home_rounded,
+                      color: Colors.teal.shade600,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => SubleasingScreen()),
+                      ),
+                    ),
+                    FeatureCard(
+                      title: "Move Out Sale",
+                      subtitle: "Buy and sell used items",
+                      icon: Icons.shopping_cart_rounded,
+                      color: Colors.orange.shade600,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => MoveOutSaleScreen()),
+                      ),
+                    ),
+                    FeatureCard(
+                      title: "Community Feed",
+                      subtitle: "Post updates, ask questions, and share info",
+                      icon: Icons.forum_rounded,
+                      color: Colors.purple.shade600,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => CommunityFeedScreen()),
+                      ),
+                    ),
+                    FeatureCard(
+                      title: "Polls",
+                      subtitle: "Vote and create opinion polls",
+                      icon: Icons.poll_rounded,
+                      color: Colors.red.shade600,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => PollsScreen()),
+                      ),
+                    ),
+                  ],
+                )),
+        /*   Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   ElevatedButton(
@@ -113,7 +246,73 @@ class HomePageState extends State<HomePage> {
                     child: const Text('Search for a Ride'),
                   ),
                 ],
+              ),*/
+      ),
+    );
+  }
+}
+
+class FeatureCard extends StatelessWidget {
+  final String title, subtitle;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  FeatureCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(15),
+      child: Card(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        elevation: 6,
+        margin: EdgeInsets.symmetric(vertical: 10, horizontal: 5),
+        shadowColor: Colors.grey.shade400,
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+          child: Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: color,
+                radius: 30,
+                child: Icon(icon, color: Colors.white, size: 30),
               ),
+              SizedBox(width: 15),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 17,
+                      ),
+                    ),
+                    SizedBox(height: 5),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.arrow_forward_ios_rounded,
+                  color: Colors.grey.shade600, size: 20),
+            ],
+          ),
+        ),
       ),
     );
   }
