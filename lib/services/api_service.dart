@@ -15,6 +15,8 @@ class ApiService {
         return ApiConfig.carsBaseUrl;
       case 'post_ride':
         return ApiConfig.postRideBaseUrl;
+      case 'search_ride':
+        return ApiConfig.searchRideBaseUrl;
       default:
         throw Exception("Invalid API module: $module");
     }

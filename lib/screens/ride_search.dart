@@ -1,8 +1,11 @@
+import 'package:campus_connect/screens/search_rides_list.dart';
 import 'package:campus_connect/screens/utilities/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'location_search_screen.dart';
 
 class RideSearchScreen extends StatefulWidget {
@@ -15,6 +18,8 @@ class RideSearchScreen extends StatefulWidget {
 class RideSearchScreenState extends State<RideSearchScreen> {
   final TextEditingController _fromController = TextEditingController();
   final TextEditingController _toController = TextEditingController();
+  String? _selectedDateTime;
+  DateTime? _departureDateTime;
 
   LatLng? _fromLocation;
   LatLng? _toLocation;
@@ -23,7 +28,9 @@ class RideSearchScreenState extends State<RideSearchScreen> {
   final Set<Marker> _markers = {};
   Polyline? _routePolyline;
 
-  late String googleApiKey = Constants.googleApiKey;
+  final String googleApiKey = Constants.googleApiKey;
+
+  bool _isRouteFetched = false;
 
   @override
   void dispose() {
@@ -32,16 +39,8 @@ class RideSearchScreenState extends State<RideSearchScreen> {
     super.dispose();
   }
 
-  @override
-  void initState() {
-    super.initState();
-    googleApiKey = 'AIzaSyDYcWPWWFCBxoe29GllyuPGwV3IXN0F750';
-    debugPrint("Google API Key Initialized: $googleApiKey");
-  }
-
   Future<void> _navigateToSearch(
       String title, TextEditingController controller, bool isFrom) async {
-    debugPrint("Navigating to search with API Key: $googleApiKey");
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -52,47 +51,32 @@ class RideSearchScreenState extends State<RideSearchScreen> {
       ),
     );
 
-    if (!mounted) return; // Check if widget is still mounted
-
     if (result != null) {
-      debugPrint("Search Result: $result");
       controller.text = result['description'] ?? "Unknown Location";
 
       final lat = result['lat'];
       final lng = result['lng'];
 
       if (lat != null && lng != null) {
-        if (isFrom) {
-          _fromLocation = LatLng(lat, lng);
-        } else {
-          _toLocation = LatLng(lat, lng);
-        }
-      } else {
-        debugPrint("Lat/Lng are null in result.");
+        setState(() {
+          if (isFrom) {
+            _fromLocation = LatLng(lat, lng);
+          } else {
+            _toLocation = LatLng(lat, lng);
+          }
+        });
       }
-
-      setState(() {});
-    } else {
-      debugPrint("Search Result is null.");
     }
   }
 
   Future<void> _fetchRoute() async {
-    if (_fromLocation == null || _toLocation == null) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select both locations.")),
-      );
-      return;
-    }
+    if (_fromLocation == null || _toLocation == null) return;
 
     final response = await http.get(
       Uri.parse(
         'https://maps.googleapis.com/maps/api/directions/json?origin=${_fromLocation!.latitude},${_fromLocation!.longitude}&destination=${_toLocation!.latitude},${_toLocation!.longitude}&key=$googleApiKey',
       ),
     );
-
-    if (!mounted) return;
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -108,24 +92,13 @@ class RideSearchScreenState extends State<RideSearchScreen> {
             width: 4,
           );
 
-          // Update camera to fit the route
           LatLngBounds bounds = _getBoundsForPolyline(decodedPoints);
           _mapController
               .animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
-        });
 
-        debugPrint("Route Polyline Set: $decodedPoints");
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("No route found between locations.")),
-        );
+          _isRouteFetched = true;
+        });
       }
-    } else {
-      debugPrint("Failed API Response: ${response.body}");
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to fetch route from API.")),
-      );
     }
   }
 
@@ -178,36 +151,38 @@ class RideSearchScreenState extends State<RideSearchScreen> {
     return points;
   }
 
-  void _updateCameraBounds() {
-    if (_fromLocation != null && _toLocation != null) {
-      LatLngBounds bounds = LatLngBounds(
-        southwest: LatLng(
-          _fromLocation!.latitude < _toLocation!.latitude
-              ? _fromLocation!.latitude
-              : _toLocation!.latitude,
-          _fromLocation!.longitude < _toLocation!.longitude
-              ? _fromLocation!.longitude
-              : _toLocation!.longitude,
-        ),
-        northeast: LatLng(
-          _fromLocation!.latitude > _toLocation!.latitude
-              ? _fromLocation!.latitude
-              : _toLocation!.latitude,
-          _fromLocation!.longitude > _toLocation!.longitude
-              ? _fromLocation!.longitude
-              : _toLocation!.longitude,
-        ),
+  void _navigateToAvailableRidesList() {
+    if (_fromLocation == null ||
+        _toLocation == null ||
+        _departureDateTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text("Please select locations and departure time")),
       );
-      debugPrint("Updating camera bounds: $bounds");
-      _mapController.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
+      return;
     }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SearchedRidesList(
+          fromLocation: _fromController.text,
+          fromLat: _fromLocation!.latitude,
+          fromLong: _fromLocation!.longitude,
+          toLocation: _toController.text,
+          toLat: _toLocation!.latitude,
+          toLong: _toLocation!.longitude,
+          departureTime: _departureDateTime!.toIso8601String(),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Search for a Ride'),
+        title: const Text('Post a Ride'),
         backgroundColor: Colors.brown,
         centerTitle: true,
       ),
@@ -226,8 +201,7 @@ class RideSearchScreenState extends State<RideSearchScreen> {
                     decoration: InputDecoration(
                       labelText: "From",
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+                          borderRadius: BorderRadius.circular(10)),
                       suffixIcon: const Icon(Icons.location_on),
                     ),
                   ),
@@ -242,23 +216,53 @@ class RideSearchScreenState extends State<RideSearchScreen> {
                     decoration: InputDecoration(
                       labelText: "To",
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+                          borderRadius: BorderRadius.circular(10)),
                       suffixIcon: const Icon(Icons.location_on),
                     ),
                   ),
                 ),
                 const SizedBox(height: 10),
+                GestureDetector(
+                  onTap: () {
+                    DatePicker.showDateTimePicker(
+                      context,
+                      showTitleActions: true,
+                      minTime: DateTime.now(),
+                      maxTime: DateTime(2025, 12, 31),
+                      onConfirm: (date) {
+                        setState(() {
+                          _selectedDateTime =
+                              DateFormat('yyyy-MM-dd HH:mm').format(date);
+                          _departureDateTime = date;
+                        });
+                      },
+                      currentTime: DateTime.now(),
+                    );
+                  },
+                  child: TextField(
+                    enabled: false,
+                    decoration: InputDecoration(
+                      labelText: _selectedDateTime ?? "Select Date & Time",
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      suffixIcon: const Icon(Icons.calendar_today),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: _fetchRoute,
+                  onPressed: _isRouteFetched
+                      ? _navigateToAvailableRidesList
+                      : _fetchRoute,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.brown,
                     minimumSize: const Size(double.infinity, 50),
                   ),
-                  child: const Text(
-                    "Search Route",
-                    style: TextStyle(color: Colors.white),
-                  ),
+                  child: Text(
+                      _isRouteFetched
+                          ? "View Available Rides List"
+                          : "Get Route",
+                      style: const TextStyle(color: Colors.white)),
                 ),
               ],
             ),
@@ -266,14 +270,8 @@ class RideSearchScreenState extends State<RideSearchScreen> {
           Expanded(
             child: GoogleMap(
               initialCameraPosition: const CameraPosition(
-                target: LatLng(
-                    40.500618, -74.447449), // Rutgers University, New Brunswick
-                zoom: 15,
-              ),
-              onMapCreated: (controller) {
-                _mapController = controller;
-                _updateCameraBounds();
-              },
+                  target: LatLng(40.500618, -74.447449), zoom: 15),
+              onMapCreated: (controller) => _mapController = controller,
               markers: _markers,
               polylines: _routePolyline != null ? {_routePolyline!} : {},
             ),
