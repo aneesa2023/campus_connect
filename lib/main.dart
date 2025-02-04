@@ -44,7 +44,7 @@ class MyApp extends StatelessWidget {
       home: const AuthChecker(),
       // initialRoute: '/',
       routes: {
-        '/': (context) => OnboardingScreen(),
+        '/onboarding': (context) => OnboardingScreen(),
         '/login': (context) => LoginScreen(),
         '/signup': (context) => SignUpScreen(),
         '/confirm_account': (context) => ConfirmAccountScreen(),

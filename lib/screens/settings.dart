@@ -27,6 +27,9 @@ class SettingsState extends State<Settings> {
             _buildSettingOption('Delete or Deactivate Account', () {
               Navigator.pushNamed(context, '/delete_account');
             }),
+            _buildSettingOption('Help and Support', () {
+              Navigator.pushNamed(context, '/help_support');
+            }),
           ],
         ),
       ),

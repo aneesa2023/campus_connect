@@ -86,28 +86,25 @@ class CustomDrawerState extends State<CustomDrawer> {
                 _buildDrawerItem(Icons.person, 'Profile', () {
                   Navigator.pushNamed(context, '/view_profile');
                 }),
-                _buildDrawerItem(Icons.directions_car, 'My Trips', () {
-                  Navigator.pushNamed(context, '/my_trips');
-                }),
+                // _buildDrawerItem(Icons.directions_car, 'My Trips', () {
+                //   Navigator.pushNamed(context, '/my_trips');
+                // }),
+                //
+                // // Show "Posted Rides List" Only If User is a Driver
+                // if (isDriver)
+                //   _buildDrawerItem(Icons.list_alt_rounded, 'Posted Rides List',
+                //       () {
+                //     Navigator.pushNamed(context, '/postedRides');
+                //   }),
 
-                // Show "Posted Rides List" Only If User is a Driver
-                if (isDriver)
-                  _buildDrawerItem(Icons.list_alt_rounded, 'Posted Rides List',
-                      () {
-                    Navigator.pushNamed(context, '/postedRides');
-                  }),
-
-                _buildDrawerItem(Icons.info, 'About', () {
-                  Navigator.pushNamed(context, '/about');
-                }),
                 _buildDrawerItem(Icons.notifications, 'Notifications', () {
                   Navigator.pushNamed(context, '/notifications');
                 }),
                 _buildDrawerItem(Icons.settings, 'Settings', () {
                   Navigator.pushNamed(context, '/settings');
                 }),
-                _buildDrawerItem(Icons.help, 'Help and Support', () {
-                  Navigator.pushNamed(context, '/help_support');
+                _buildDrawerItem(Icons.info, 'About', () {
+                  Navigator.pushNamed(context, '/about');
                 }),
                 _buildDrawerItem(
                   Icons.logout,
