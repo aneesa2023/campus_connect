@@ -1,11 +1,11 @@
 import 'package:campus_connect/screens/custom_drawer.dart';
 import 'package:campus_connect/services/auth_service.dart';
 import 'package:campus_connect/services/api_service.dart';
-import 'package:campus_connect/screens/upcoming_features/community_feed.dart';
-import 'package:campus_connect/screens/upcoming_features/find_roommates.dart';
-import 'package:campus_connect/screens/upcoming_features/moveout_sale.dart';
-import 'package:campus_connect/screens/upcoming_features/polls_screen.dart';
-import 'package:campus_connect/screens/upcoming_features/subleasing.dart';
+// import 'package:campus_connect/screens/upcoming_features/community_feed.dart';
+// import 'package:campus_connect/screens/upcoming_features/find_roommates.dart';
+// import 'package:campus_connect/screens/upcoming_features/moveout_sale.dart';
+// import 'package:campus_connect/screens/upcoming_features/polls_screen.dart';
+// import 'package:campus_connect/screens/upcoming_features/subleasing.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {

@@ -109,9 +109,14 @@ class CustomDrawerState extends State<CustomDrawer> {
                 _buildDrawerItem(Icons.help, 'Help and Support', () {
                   Navigator.pushNamed(context, '/help_support');
                 }),
-                _buildDrawerItem(Icons.logout, 'Logout', () {
-                  Navigator.pushNamed(context, '/');
-                }),
+                _buildDrawerItem(
+                  Icons.logout,
+                  'Logout',
+                  () async {
+                    await AuthService.clearToken();
+                    Navigator.pushReplacementNamed(context, '/login');
+                  },
+                ),
               ],
             ),
           ),

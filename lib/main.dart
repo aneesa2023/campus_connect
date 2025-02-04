@@ -17,6 +17,7 @@ import 'package:campus_connect/screens/privacy_policy.dart';
 import 'package:campus_connect/screens/ride_search.dart';
 import 'package:campus_connect/screens/view_profile.dart';
 import 'package:campus_connect/screens/settings.dart';
+import 'package:campus_connect/services/auth_service.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -40,7 +41,8 @@ class MyApp extends StatelessWidget {
           primarySwatch: Colors.brown,
           scaffoldBackgroundColor: Colors.white,
           primaryColor: Colors.brown),
-      initialRoute: '/', // Define the initial route
+      home: const AuthChecker(),
+      // initialRoute: '/',
       routes: {
         '/': (context) => OnboardingScreen(),
         '/login': (context) => LoginScreen(),
@@ -69,6 +71,27 @@ class MyApp extends StatelessWidget {
             ),
         '/registerDriver': (context) => RegisterDriverScreen(),
         '/postedRides': (context) => PostedRidesList(),
+      },
+    );
+  }
+}
+
+class AuthChecker extends StatelessWidget {
+  const AuthChecker({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: AuthService.isLoggedIn(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        // If logged in, go to HomePage; otherwise, go to OnboardingScreen
+        return snapshot.data == true
+            ? const HomePage()
+            : const OnboardingScreen();
       },
     );
   }

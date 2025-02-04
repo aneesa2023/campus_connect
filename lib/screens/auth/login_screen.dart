@@ -56,7 +56,7 @@ class LoginScreenState extends State<LoginScreen> {
         ),
       );
 
-      Navigator.pushNamed(context, '/home');
+      Navigator.pushReplacementNamed(context, '/home');
     } catch (e) {
       if (!mounted) return;
       String errorMessage = "An unexpected error occurred";

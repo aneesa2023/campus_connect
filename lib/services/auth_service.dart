@@ -1,5 +1,6 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   static const _storage = FlutterSecureStorage();
@@ -33,5 +34,19 @@ class AuthService {
   // Clear Authentication Data (Logout)
   static Future<void> logout() async {
     await _storage.deleteAll();
+  }
+
+  // Check if user is authenticated (Valid Token Exists)
+  static Future<bool> isLoggedIn() async {
+    String? token = await getToken();
+
+    if (token == null) return false;
+    return !JwtDecoder.isExpired(token);
+  }
+
+  // Remove Token (Logout)
+  static Future<void> clearToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_tokenKey);
   }
 }
