@@ -331,8 +331,7 @@ class _SearchedRidesListState extends State<SearchedRidesList> {
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
-                                            "--",
-                                            // ride['price']!,
+                                            ride['ride_price'].toString(),
                                             style: TextStyle(
                                               fontSize: 14,
                                               color: Colors.grey[700],

@@ -78,7 +78,7 @@ class _ViewRideRequestsListState extends State<ViewRideRequestsList> {
         endpoint: '${widget.rideId}/request/$requestId',
         body: body,
       );
-
+      print(response.toString());
       if (response.containsKey('success') && response['success'] == true) {
         setState(() {
           _requests[index]['ride_status'] =
@@ -181,10 +181,10 @@ class _ViewRideRequestsListState extends State<ViewRideRequestsList> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildDetailRow("Rider ID", request['rider_id']),
-                  _buildDetailRow("Status", request['ride_status']),
-                  _buildDetailRow("Requested At", request['created_at']),
-                  _buildDetailRow("Updated At", request['updated_at']),
+                  _buildDetailRow("Rider ID", request['rider_id'] ?? "-"),
+                  _buildDetailRow("Status", request['ride_status'] ?? "-"),
+                  _buildDetailRow("Requested At", request['created_at'] ?? "-"),
+                  _buildDetailRow("Updated At", request['updated_at'] ?? "-"),
                   const Divider(),
                   if (request['ride_status'] == 'pending')
                     Row(
