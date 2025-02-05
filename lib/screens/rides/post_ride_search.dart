@@ -1,4 +1,5 @@
-import 'package:campus_connect/screens/search_rides_list.dart';
+import 'package:campus_connect/screens/rides/location_search_screen.dart';
+import 'package:campus_connect/screens/rides/post_ride_details.dart';
 import 'package:campus_connect/screens/utilities/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -6,16 +7,15 @@ import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
-import 'location_search_screen.dart';
 
-class RideSearchScreen extends StatefulWidget {
-  const RideSearchScreen({super.key});
+class PostRideLocationScreen extends StatefulWidget {
+  const PostRideLocationScreen({super.key});
 
   @override
-  RideSearchScreenState createState() => RideSearchScreenState();
+  PostRideLocationScreenState createState() => PostRideLocationScreenState();
 }
 
-class RideSearchScreenState extends State<RideSearchScreen> {
+class PostRideLocationScreenState extends State<PostRideLocationScreen> {
   final TextEditingController _fromController = TextEditingController();
   final TextEditingController _toController = TextEditingController();
   String? _selectedDateTime;
@@ -31,11 +31,7 @@ class RideSearchScreenState extends State<RideSearchScreen> {
   final String googleApiKey = Constants.googleApiKey;
 
   bool _isRouteFetched = false;
-  // Additional filter selections
-  bool _petFriendly = false;
-  bool _trunkSpace = false;
-  bool _wheelchairAccess = false;
-  int _seatsRequested = 1;
+
   @override
   void dispose() {
     _fromController.dispose();
@@ -155,7 +151,7 @@ class RideSearchScreenState extends State<RideSearchScreen> {
     return points;
   }
 
-  void _navigateToAvailableRidesList() {
+  void _navigateToPostRideDetails() {
     if (_fromLocation == null ||
         _toLocation == null ||
         _departureDateTime == null) {
@@ -169,7 +165,7 @@ class RideSearchScreenState extends State<RideSearchScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => SearchedRidesList(
+        builder: (context) => PostRideDetails(
           fromLocation: _fromController.text,
           fromLat: _fromLocation!.latitude,
           fromLong: _fromLocation!.longitude,
@@ -177,10 +173,6 @@ class RideSearchScreenState extends State<RideSearchScreen> {
           toLat: _toLocation!.latitude,
           toLong: _toLocation!.longitude,
           departureTime: _departureDateTime!.toIso8601String(),
-          petFriendly: _petFriendly,
-          trunkSpace: _trunkSpace,
-          wheelchairAccess: _wheelchairAccess,
-          seatsRequested: _seatsRequested,
         ),
       ),
     );
@@ -197,7 +189,7 @@ class RideSearchScreenState extends State<RideSearchScreen> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(10.0),
+            padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
                 GestureDetector(
@@ -257,52 +249,16 @@ class RideSearchScreenState extends State<RideSearchScreen> {
                     ),
                   ),
                 ),
-                _buildCheckbox("Pet Friendly", _petFriendly, (value) {
-                  setState(() => _petFriendly = value);
-                }),
-                _buildCheckbox("Trunk Space", _trunkSpace, (value) {
-                  setState(() => _trunkSpace = value);
-                }),
-                _buildCheckbox("Wheelchair Access", _wheelchairAccess, (value) {
-                  setState(() => _wheelchairAccess = value);
-                }),
-                Row(
-                  children: [
-                    const Text("Required no.of seats: ",
-                        style: TextStyle(fontSize: 14)),
-                    SizedBox(
-                      width: 20,
-                    ),
-                    DropdownButton<int>(
-                      value: _seatsRequested,
-                      onChanged: (newValue) {
-                        if (newValue != null) {
-                          setState(() {
-                            _seatsRequested = newValue;
-                          });
-                        }
-                      },
-                      items: List.generate(6, (index) => index + 1)
-                          .map((seat) => DropdownMenuItem<int>(
-                                value: seat,
-                                child: Text(seat.toString()),
-                              ))
-                          .toList(),
-                    ),
-                  ],
-                ),
+                const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: _isRouteFetched
-                      ? _navigateToAvailableRidesList
+                      ? _navigateToPostRideDetails
                       : _fetchRoute,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.brown,
                     minimumSize: const Size(double.infinity, 50),
                   ),
-                  child: Text(
-                      _isRouteFetched
-                          ? "View Available Rides List"
-                          : "Get Route",
+                  child: Text(_isRouteFetched ? "Post Ride" : "Get Route",
                       style: const TextStyle(color: Colors.white)),
                 ),
               ],
@@ -319,22 +275,6 @@ class RideSearchScreenState extends State<RideSearchScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildCheckbox(String label, bool value, Function(bool) onChanged) {
-    return Row(
-      children: [
-        Checkbox(
-          value: value,
-          onChanged: (bool? newValue) {
-            if (newValue != null) {
-              onChanged(newValue);
-            }
-          },
-        ),
-        Text(label, style: const TextStyle(fontSize: 14)),
-      ],
     );
   }
 }

@@ -1,4 +1,4 @@
-import 'package:campus_connect/screens/view_ride_requests_list.dart';
+import 'package:campus_connect/screens/rides/view_ride_requests_list.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:campus_connect/services/api_service.dart';
@@ -243,7 +243,10 @@ class _PostedRidesListState extends State<PostedRidesList> {
     return RefreshIndicator(
       onRefresh: _fetchPostedRides,
       child: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Colors.brown,))
+          ? const Center(
+              child: CircularProgressIndicator(
+              color: Colors.brown,
+            ))
           : _errorMessage != null
               ? Center(
                   child: Text(_errorMessage!,

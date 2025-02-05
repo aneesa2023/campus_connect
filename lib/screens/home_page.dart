@@ -1,4 +1,4 @@
-import 'package:campus_connect/screens/custom_drawer.dart';
+import 'package:campus_connect/screens/menu/custom_drawer.dart';
 import 'package:campus_connect/services/auth_service.dart';
 import 'package:campus_connect/services/api_service.dart';
 // import 'package:campus_connect/screens/upcoming_features/community_feed.dart';

@@ -1,4 +1,4 @@
-import 'package:campus_connect/screens/driver_profile.dart';
+import 'package:campus_connect/screens/rides/driver_profile.dart';
 import 'package:campus_connect/services/api_service.dart';
 import 'package:campus_connect/services/auth_service.dart';
 import 'package:flutter/material.dart';
