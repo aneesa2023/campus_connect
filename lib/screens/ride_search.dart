@@ -31,7 +31,11 @@ class RideSearchScreenState extends State<RideSearchScreen> {
   final String googleApiKey = Constants.googleApiKey;
 
   bool _isRouteFetched = false;
-
+  // Additional filter selections
+  bool _petFriendly = false;
+  bool _trunkSpace = false;
+  bool _wheelchairAccess = false;
+  int _seatsRequested = 1;
   @override
   void dispose() {
     _fromController.dispose();
@@ -173,6 +177,10 @@ class RideSearchScreenState extends State<RideSearchScreen> {
           toLat: _toLocation!.latitude,
           toLong: _toLocation!.longitude,
           departureTime: _departureDateTime!.toIso8601String(),
+          petFriendly: _petFriendly,
+          trunkSpace: _trunkSpace,
+          wheelchairAccess: _wheelchairAccess,
+          seatsRequested: _seatsRequested,
         ),
       ),
     );
@@ -189,7 +197,7 @@ class RideSearchScreenState extends State<RideSearchScreen> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(10.0),
             child: Column(
               children: [
                 GestureDetector(
@@ -249,7 +257,40 @@ class RideSearchScreenState extends State<RideSearchScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                _buildCheckbox("Pet Friendly", _petFriendly, (value) {
+                  setState(() => _petFriendly = value);
+                }),
+                _buildCheckbox("Trunk Space", _trunkSpace, (value) {
+                  setState(() => _trunkSpace = value);
+                }),
+                _buildCheckbox("Wheelchair Access", _wheelchairAccess, (value) {
+                  setState(() => _wheelchairAccess = value);
+                }),
+                Row(
+                  children: [
+                    const Text("Required no.of seats: ",
+                        style: TextStyle(fontSize: 14)),
+                    SizedBox(
+                      width: 20,
+                    ),
+                    DropdownButton<int>(
+                      value: _seatsRequested,
+                      onChanged: (newValue) {
+                        if (newValue != null) {
+                          setState(() {
+                            _seatsRequested = newValue;
+                          });
+                        }
+                      },
+                      items: List.generate(6, (index) => index + 1)
+                          .map((seat) => DropdownMenuItem<int>(
+                                value: seat,
+                                child: Text(seat.toString()),
+                              ))
+                          .toList(),
+                    ),
+                  ],
+                ),
                 ElevatedButton(
                   onPressed: _isRouteFetched
                       ? _navigateToAvailableRidesList
@@ -278,6 +319,22 @@ class RideSearchScreenState extends State<RideSearchScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildCheckbox(String label, bool value, Function(bool) onChanged) {
+    return Row(
+      children: [
+        Checkbox(
+          value: value,
+          onChanged: (bool? newValue) {
+            if (newValue != null) {
+              onChanged(newValue);
+            }
+          },
+        ),
+        Text(label, style: const TextStyle(fontSize: 14)),
+      ],
     );
   }
 }

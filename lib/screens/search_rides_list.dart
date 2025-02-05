@@ -10,6 +10,10 @@ class SearchedRidesList extends StatefulWidget {
   final double toLat;
   final double toLong;
   final String departureTime;
+  final bool petFriendly;
+  final bool trunkSpace;
+  final bool wheelchairAccess;
+  final int seatsRequested;
 
   const SearchedRidesList({
     super.key,
@@ -20,6 +24,10 @@ class SearchedRidesList extends StatefulWidget {
     required this.toLat,
     required this.toLong,
     required this.departureTime,
+    required this.petFriendly,
+    required this.trunkSpace,
+    required this.wheelchairAccess,
+    required this.seatsRequested,
   });
 
   @override
@@ -53,6 +61,10 @@ class _SearchedRidesListState extends State<SearchedRidesList> {
         "to_lat": widget.toLat,
         "to_long": widget.toLong,
         "departure_time": widget.departureTime,
+        "pet_friendly": widget.petFriendly,
+        "trunk_space": widget.trunkSpace,
+        "wheelchair_access": widget.wheelchairAccess,
+        "seats_requested": widget.seatsRequested
       };
       final response = await ApiService.postRequest(
         module: 'search_ride',
