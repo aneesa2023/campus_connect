@@ -203,7 +203,7 @@ class MyTripsScreenState extends State<MyTripsScreen>
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                trip['price']!,
+                                trip['price'].toString(),
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: Colors.grey[700],

@@ -59,6 +59,7 @@ class _PostedRidesListState extends State<PostedRidesList> {
               "total_seats": _parseSeats(item["total_seats"]),
               "available_seats": _parseSeats(item["available_seats"]),
               "note": item["note"]?.toString() ?? "No notes",
+              "ride_price": item["ride_price"].toString() ?? "N/A",
             };
 
             // Sort rides into different lists
@@ -329,8 +330,7 @@ class _PostedRidesListState extends State<PostedRidesList> {
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
-                                            "--",
-                                            // ride['price']!,
+                                            '\$ ${ride['ride_price']}',
                                             style: TextStyle(
                                               fontSize: 14,
                                               color: Colors.grey[700],
