@@ -1,3 +1,4 @@
+import 'package:campus_connect/screens/driver_profile.dart';
 import 'package:campus_connect/services/api_service.dart';
 import 'package:campus_connect/services/auth_service.dart';
 import 'package:flutter/material.dart';
@@ -236,6 +237,45 @@ class _SearchedRidesListState extends State<SearchedRidesList> {
                                 const Divider(),
                                 Row(
                                   mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    OutlinedButton(
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => DriverProfile(
+                                              driverId: ride['user_id'],
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: Colors.black,
+                                        side: const BorderSide(
+                                            color: Colors.brown),
+                                      ),
+                                      child: Text(
+                                        'Driver Details',
+                                        style: TextStyle(color: Colors.brown),
+                                      ),
+                                    ),
+                                    OutlinedButton(
+                                      onPressed: () {},
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: Colors.black,
+                                        side: const BorderSide(
+                                            color: Colors.brown),
+                                      ),
+                                      child: Text(
+                                        'Vehicle Details',
+                                        style: TextStyle(color: Colors.brown),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Row(
+                                  mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     Expanded(
@@ -357,28 +397,26 @@ class _SearchedRidesListState extends State<SearchedRidesList> {
                                   style: TextStyle(
                                       fontSize: 14, color: Colors.grey[700]),
                                 ),
-                                Center(
-                                  child: ElevatedButton(
-                                    onPressed: () {
-                                      _requestRide(ride['ride_status'])
-                                                  .toString() ==
-                                              "pending"
-                                          ? null
-                                          : _requestRide(ride['ride_id']);
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.brown,
-                                      minimumSize:
-                                          const Size(double.infinity, 40),
-                                    ),
-                                    child: Text(
-                                      _requestRide(ride['ride_status'])
-                                                  .toString() ==
-                                              "pending"
-                                          ? 'Requested Ride'
-                                          : 'Request Ride',
-                                      style: TextStyle(color: Colors.white),
-                                    ),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    _requestRide(ride['ride_status'])
+                                                .toString() ==
+                                            "pending"
+                                        ? null
+                                        : _requestRide(ride['ride_id']);
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.brown,
+                                    minimumSize:
+                                        const Size(double.infinity, 40),
+                                  ),
+                                  child: Text(
+                                    _requestRide(ride['ride_status'])
+                                                .toString() ==
+                                            "pending"
+                                        ? 'Requested Ride'
+                                        : 'Request Ride',
+                                    style: TextStyle(color: Colors.white),
                                   ),
                                 ),
                               ],
