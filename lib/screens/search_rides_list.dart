@@ -40,6 +40,7 @@ class _SearchedRidesListState extends State<SearchedRidesList> {
   bool _isLoading = true;
   String? _errorMessage;
   String? riderUserId;
+  TextEditingController noteController = TextEditingController();
 
   @override
   void initState() {
@@ -105,11 +106,47 @@ class _SearchedRidesListState extends State<SearchedRidesList> {
     }
   }
 
-  Future<void> _requestRide(String rideId) async {
+  Future<void> _showNoteDialog(String rideId) async {
+    return showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Add a Note"),
+        content: TextField(
+          controller: noteController,
+          decoration: const InputDecoration(
+            labelText: "Enter your message for the driver",
+            border: OutlineInputBorder(),
+          ),
+          maxLines: 3,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _requestRide(rideId, noteController.text);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.brown),
+            child: const Text(
+              "Send Request",
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _requestRide(String rideId, String notes) async {
     try {
       final requestPayload = {
         "rider_id": riderUserId,
-        "ride_status": "pending"
+        "ride_status": "pending",
+        "seats_requested": widget.seatsRequested,
+        "notes": notes
       };
       _isLoading = true;
       print("$rideId-----$riderUserId");
@@ -120,6 +157,7 @@ class _SearchedRidesListState extends State<SearchedRidesList> {
       );
 
       if (response.containsKey("message")) {
+        print("test print" + response.toString());
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(response["message"]),
@@ -399,11 +437,12 @@ class _SearchedRidesListState extends State<SearchedRidesList> {
                                 ),
                                 ElevatedButton(
                                   onPressed: () {
-                                    _requestRide(ride['ride_status'])
+                                    _requestRide(ride['ride_status'],
+                                                    noteController.text)
                                                 .toString() ==
                                             "pending"
                                         ? null
-                                        : _requestRide(ride['ride_id']);
+                                        : _showNoteDialog(ride['ride_id']);
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.brown,
@@ -411,7 +450,8 @@ class _SearchedRidesListState extends State<SearchedRidesList> {
                                         const Size(double.infinity, 40),
                                   ),
                                   child: Text(
-                                    _requestRide(ride['ride_status'])
+                                    _requestRide(ride['ride_status'],
+                                                    noteController.text)
                                                 .toString() ==
                                             "pending"
                                         ? 'Requested Ride'
