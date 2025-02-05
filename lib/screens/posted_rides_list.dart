@@ -243,7 +243,7 @@ class _PostedRidesListState extends State<PostedRidesList> {
     return RefreshIndicator(
       onRefresh: _fetchPostedRides,
       child: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: Colors.brown,))
           : _errorMessage != null
               ? Center(
                   child: Text(_errorMessage!,

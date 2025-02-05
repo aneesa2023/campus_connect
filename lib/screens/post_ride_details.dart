@@ -27,6 +27,7 @@ class PostRideDetails extends StatefulWidget {
 }
 
 class PostRideDetailsState extends State<PostRideDetails> {
+  final TextEditingController _ridePriceController = TextEditingController();
   final TextEditingController _totalSeatsController = TextEditingController();
   final TextEditingController _availableSeatsController =
       TextEditingController();
@@ -162,13 +163,14 @@ class PostRideDetailsState extends State<PostRideDetails> {
         "total_seats": int.tryParse(_totalSeatsController.text) ?? 1,
         "available_seats": int.tryParse(_availableSeatsController.text) ?? 1,
         "departure_time": widget.departureTime,
-        "pet_friendly": _selectedOptions['pet_friendly'].toString(),
-        "trunk_space": _selectedOptions['trunk_space'].toString(),
-        "air_conditioning": _selectedOptions['air_conditioning'].toString(),
-        "wheelchair_access": _selectedOptions['wheelchair_access'].toString(),
+        "pet_friendly": _selectedOptions['pet_friendly'],
+        "trunk_space": _selectedOptions['trunk_space'],
+        "air_conditioning": _selectedOptions['air_conditioning'],
+        "wheelchair_access": _selectedOptions['wheelchair_access'],
         "note": _noteToRidersController.text,
         "ride_status": "scheduled",
         "created_at": DateTime.now().toIso8601String(),
+        "ride_price": double.tryParse(_ridePriceController.text) ?? 0.0,
       };
 
       await ApiService.postRequest(
@@ -209,6 +211,15 @@ class PostRideDetailsState extends State<PostRideDetails> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    TextField(
+                      controller: _ridePriceController,
+                      decoration: const InputDecoration(
+                        labelText: "Ride Price (\$)",
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.number,
+                    ),
+                    const SizedBox(height: 15),
                     // Select Vehicle
                     DropdownButtonFormField<String>(
                       value: _selectedVehicle,
@@ -231,7 +242,7 @@ class PostRideDetailsState extends State<PostRideDetails> {
                         border: OutlineInputBorder(),
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 15),
 
                     ElevatedButton(
                       onPressed: () {
@@ -242,7 +253,7 @@ class PostRideDetailsState extends State<PostRideDetails> {
                         style: TextStyle(color: Colors.brown),
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 15),
                     if (_isAddingVehicle)
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -301,7 +312,7 @@ class PostRideDetailsState extends State<PostRideDetails> {
                       ),
                       keyboardType: TextInputType.number,
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 15),
 
                     // **Available Seats**
                     TextField(
@@ -312,7 +323,7 @@ class PostRideDetailsState extends State<PostRideDetails> {
                       ),
                       keyboardType: TextInputType.number,
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 15),
 
                     // **Note to Riders**
                     TextField(
@@ -322,7 +333,7 @@ class PostRideDetailsState extends State<PostRideDetails> {
                         border: OutlineInputBorder(),
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 15),
                     Card(
                       margin: EdgeInsets.zero,
                       child: Padding(
@@ -343,8 +354,9 @@ class PostRideDetailsState extends State<PostRideDetails> {
                               children: _multiSelectOptions.map((option) {
                                 String key =
                                     option.toLowerCase().replaceAll(' ', '_');
-                                if (key == 'wheelchair_accessible')
+                                if (key == 'wheelchair_accessible') {
                                   key = 'wheelchair_access';
+                                }
 
                                 return FilterChip(
                                   label: Text(option),
