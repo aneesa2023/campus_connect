@@ -329,16 +329,13 @@ class _PostedRidesListState extends State<PostedRidesList> {
                                     children: [
                                       if (status == "scheduled")
                                         Expanded(
-                                            child: ElevatedButton(
+                                            child: TextButton(
                                           onPressed: () =>
                                               _cancelRide(ride['ride_id']),
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.red,
-                                          ),
                                           child: const Text(
                                             'Cancel Ride',
                                             style: TextStyle(
-                                              color: Colors.white,
+                                              color: Colors.red,
                                               fontSize: 12,
                                             ),
                                           ),
@@ -347,7 +344,7 @@ class _PostedRidesListState extends State<PostedRidesList> {
                                         width: 10,
                                       ),
                                       Expanded(
-                                        child: ElevatedButton(
+                                        child: OutlinedButton(
                                           onPressed: () {
                                             Navigator.push(
                                               context,
@@ -359,13 +356,13 @@ class _PostedRidesListState extends State<PostedRidesList> {
                                               ),
                                             );
                                           },
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.brown,
-                                          ),
+                                          // style: ElevatedButton.styleFrom(
+                                          //   backgroundColor: Colors.brown,
+                                          // ),
                                           child: const Text(
                                             'View All Requests',
                                             style: TextStyle(
-                                              color: Colors.white,
+                                              color: Colors.brown,
                                               fontSize: 12,
                                             ),
                                           ),

@@ -135,7 +135,12 @@ class PostRideDetailsState extends State<PostRideDetails> {
   }
 
   /// Submit Ride to API
+  bool _isSubmitting = false;
+
+  /// Submit Ride to API
   Future<void> _submitRide() async {
+    if (_isSubmitting) return; // Prevent duplicate clicks
+
     if (_selectedVehicle == null ||
         _totalSeatsController.text.isEmpty ||
         _availableSeatsController.text.isEmpty) {
@@ -146,6 +151,10 @@ class PostRideDetailsState extends State<PostRideDetails> {
       );
       return;
     }
+
+    setState(() {
+      _isSubmitting = true; // Disable button
+    });
 
     try {
       String? userId = await AuthService.getUserId();
@@ -193,6 +202,12 @@ class PostRideDetailsState extends State<PostRideDetails> {
           content: Text("Failed to post ride: ${e.toString()}"),
         ),
       );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false; // Re-enable button after completion
+        });
+      }
     }
   }
 
@@ -379,11 +394,24 @@ class PostRideDetailsState extends State<PostRideDetails> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: _submitRide,
+                        onPressed: _isSubmitting
+                            ? null
+                            : _submitRide, // Disable when submitting
                         style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.brown),
-                        child: const Text("Post Ride",
-                            style: TextStyle(color: Colors.white)),
+                          backgroundColor: Colors.brown,
+                        ),
+                        child: _isSubmitting
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white),
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text("Post Ride",
+                                style: TextStyle(color: Colors.white)),
                       ),
                     ),
                   ],

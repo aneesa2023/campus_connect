@@ -231,7 +231,7 @@ class LocationSearchScreenState extends State<LocationSearchScreen> {
                           minimumSize: const Size(double.infinity, 50),
                         ),
                         child: const Text(
-                          "Use Current Location",
+                          "Current Location",
                           style: TextStyle(color: Colors.white),
                         ),
                       ),
