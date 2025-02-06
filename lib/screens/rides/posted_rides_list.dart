@@ -1,3 +1,4 @@
+import 'package:campus_connect/screens/rides/posted_ride_details.dart';
 import 'package:campus_connect/screens/rides/view_ride_requests_list.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -59,7 +60,14 @@ class _PostedRidesListState extends State<PostedRidesList> {
               "total_seats": _parseSeats(item["total_seats"]),
               "available_seats": _parseSeats(item["available_seats"]),
               "note": item["note"]?.toString() ?? "No notes",
-              "ride_price": item["ride_price"].toString() ?? "N/A",
+              "ride_price": item["ride_price"].toString(),
+              "from_lat": item["from_lat"],
+              "from_long": item["from_long"],
+              "to_lat": item["to_lat"],
+              "to_long": item["to_long"],
+              "pet_friendly": item["pet_friendly"],
+              "trunk_space": item["trunk_space"],
+              "wheelchair_access": item["wheelchair_access"],
             };
 
             // Sort rides into different lists
@@ -187,21 +195,30 @@ class _PostedRidesListState extends State<PostedRidesList> {
             labelColor: Colors.white,
             unselectedLabelColor: Colors.white70,
             tabs: [
-              Tab(
-                text: "Scheduled",
-              ),
+              Tab(text: "Upcoming"),
               Tab(text: "Cancelled"),
               Tab(text: "Completed"),
             ],
           ),
         ),
-        body: TabBarView(
-          children: [
-            _buildRideList("scheduled"),
-            _buildRideList("cancelled"),
-            _buildRideList("completed"),
-          ],
-        ),
+        body: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(color: Colors.brown),
+              )
+            : _errorMessage != null
+                ? Center(
+                    child: Text(
+                      _errorMessage!,
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  )
+                : TabBarView(
+                    children: [
+                      _buildRideList("scheduled"),
+                      _buildRideList("cancelled"),
+                      _buildRideList("completed"),
+                    ],
+                  ),
       ),
     );
   }
@@ -221,17 +238,16 @@ class _PostedRidesListState extends State<PostedRidesList> {
     }
 
     if (rideList.isEmpty) {
-      return const Center(child: Text("No rides available."));
+      return const Center(
+        child: Text("No rides available."),
+      );
     }
     String getEnabledOptions(Map<String, dynamic> ride) {
       List<String> enabledOptions = [];
 
-      if (ride['pet_friendly'] == "true") enabledOptions.add("Pet Friendly");
-      if (ride['trunk_space'] == "true") enabledOptions.add("Trunk Space");
-      if (ride['air_conditioning'] == "true") {
-        enabledOptions.add("Air Conditioning");
-      }
-      if (ride['wheelchair_access'] == "true") {
+      if (ride['pet_friendly']) enabledOptions.add("Pet Friendly");
+      if (ride['trunk_space']) enabledOptions.add("Trunk Space");
+      if (ride['wheelchair_access']) {
         enabledOptions.add("Wheelchair Accessible");
       }
 
@@ -259,222 +275,106 @@ class _PostedRidesListState extends State<PostedRidesList> {
                       itemBuilder: (context, index) {
                         final ride = rideList[index];
 
-                        return Card(
-                          elevation: 4,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15)),
-                          margin: const EdgeInsets.symmetric(vertical: 10.0),
-                          color: Colors.white, // Background color
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      ride['departure_time']!,
-                                      style: const TextStyle(
-                                          color: Colors.green,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500),
-                                    ),
-                                    Chip(
-                                      label: Text(
-                                          ride['ride_status']!.toUpperCase()),
-                                      backgroundColor:
-                                          ride['ride_status'] == 'scheduled'
-                                              ? Colors.green.shade200
-                                              : Colors.orange.shade200,
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                const Divider(),
-                                const SizedBox(height: 12),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      ride['from_location']!,
-                                      style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.grey[700]),
-                                    ),
-                                    const Icon(Icons.arrow_downward,
-                                        color: Colors.grey, size: 16),
-                                    Text(
-                                      ride['to_location']!,
-                                      style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.grey[700]),
-                                    ),
-                                  ],
-                                ),
-                                const Divider(),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            'Price',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.black,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            '\$ ${ride['ride_price']}',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              color: Colors.grey[700],
-                                            ),
-                                          ),
-                                        ],
+                        return GestureDetector(
+                          onTap: () {
+                            // Navigate to Ride Details Screen
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    PostedRideDetailsScreen(ride: ride),
+                              ),
+                            );
+                          },
+                          child: Card(
+                            elevation: 10,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15)),
+                            margin: const EdgeInsets.symmetric(vertical: 10.0),
+                            color: Colors.grey[200], // Background color
+                            child: Padding(
+                              padding: const EdgeInsets.all(10.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        ride['departure_time']!,
+                                        style: const TextStyle(
+                                            color: Colors.green,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500),
                                       ),
-                                    ),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            'Vehicle',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.black,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            ride['car_id'].toString(),
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              color: Colors.grey[700],
-                                            ),
-                                          ),
-                                        ],
+                                      Text(
+                                        '\$ ${ride['ride_price']}',
+                                        style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            'Total Seats',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.black,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            ride['total_seats']!.toString(),
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              color: Colors.grey[700],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            'Available Seats',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.black,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            ride['available_seats']!.toString(),
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              color: Colors.grey[700],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Text(
-                                  'Notes: ${ride['note']!}',
-                                  style: TextStyle(
-                                      fontSize: 14, color: Colors.grey[700]),
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  'Additional Features: ${getEnabledOptions(ride)}',
-                                  style: TextStyle(
-                                      fontSize: 14, color: Colors.grey[700]),
-                                ),
-                                if (status == "scheduled")
-                                  Center(
-                                    child: ElevatedButton(
-                                      onPressed: () =>
-                                          _cancelRide(ride['ride_id']),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.red,
-                                        minimumSize:
-                                            const Size(double.infinity, 40),
-                                      ),
-                                      child: const Text(
-                                        'Cancel Ride',
-                                        style: TextStyle(color: Colors.white),
-                                      ),
+                                    ],
+                                  ),
+                                  Text(
+                                    ride['to_location']!,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.black,
                                     ),
                                   ),
-                                ElevatedButton(
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            ViewRideRequestsList(
-                                          rideId: '${ride['ride_id']}',
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      if (status == "scheduled")
+                                        Expanded(
+                                            child: ElevatedButton(
+                                          onPressed: () =>
+                                              _cancelRide(ride['ride_id']),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.red,
+                                          ),
+                                          child: const Text(
+                                            'Cancel Ride',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        )),
+                                      SizedBox(
+                                        width: 10,
+                                      ),
+                                      Expanded(
+                                        child: ElevatedButton(
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    ViewRideRequestsList(
+                                                  rideId: '${ride['ride_id']}',
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.brown,
+                                          ),
+                                          child: const Text(
+                                            'View All Requests',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                            ),
+                                          ),
                                         ),
                                       ),
-                                    );
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.brown,
-                                    minimumSize:
-                                        const Size(double.infinity, 40),
+                                    ],
                                   ),
-                                  child: const Text(
-                                    'View All Ride Requests',
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         );
